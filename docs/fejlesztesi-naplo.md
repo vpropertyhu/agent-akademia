@@ -104,3 +104,14 @@ Minden képességhez megjelenik, hogy szöveges utasítás, további eszköz vag
 A próbanapló az adott tervhez, célhoz és feladathoz kötött felhasználói értékelést őrzi, legfeljebb 20 bejegyzéssel ezen a böngészőn. Terv- vagy próbaváltoztatás nem örököl korábbi megfelelt állapotot. Eredmény átírásakor az ellenőrző jelölések törlődnek. Részleges ellenőrzés nem kap megfelelt állapotot. A korábbi mentett állapot dátummal elkülönül a jelenlegi szerkesztett értékeléstől. Sérült naplót nem írunk felül. Az eredmény és értékelés olvasható fájlba letölthető.
 
 A célzott logikai ellenőrzések sikeresek a változatkötésre, a beágyazott sorrendre, a célok képességbesorolására, az átadási korlátokra, az értékelési állapotokra és a naplóvalidációra. A végső kiadás állapotát a külön folyamatos mentés elején rögzítjük. Böngészős végigkattintás és tényleges külső AI-próba nem történt.
+
+
+## 10. mentési pont – szerkesztés folytatása modultörlés után
+
+Két elakadási esetet reprodukáltunk: a Javasolt lista csak a sor végére kínált elemeket, ezért a törölt köztes elem pótlása eltűnt; egy szöveggel végződő sorba visszatett íróelem pedig a sor végére került, miközben középen megmaradt a hiba. Általános szerkesztési zárolást a kódban nem találtunk.
+
+A törlés megőrzi a kivett elem helyét az új beillesztéshez. A javaslatok ezt a helyet, ennek hiányában az első hibás kapcsolatot vizsgálják. Az automatikus beillesztés a meglévő kapcsolat javítását előnyben részesíti a sor végére illesztéssel szemben. Törlés után a keresés és csoportszűrés törlődik, minden elem újra elérhető.
+
+A kivett elem neve mellett Visszateszem és Másik elemet választok gomb jelenik meg. Üres szűrt listából az Összes elem mutatása gomb visszahozza a teljes választékot. Az elemcsere, mozgatás és visszavonás rendes szerkesztési állapotba tér vissza: nem marad aktív a csoportkijelölés, húzás vagy korábbi átadási panel. A hibás kapcsolat továbbra is javításra vár a használat előtt, de a terv szerkeszthető és elmenthető marad.
+
+A scripts/test-module-editing.mjs célzott regressziós ellenőrzése sikeres: a négy gyári minta minden pozíciójából kivett elem visszahelyezése (15 eset), köztes hiányra adott javaslat, szöveggel végződő sor javítása, saját modul újbóli beillesztése és hiányos terv szerkeszthető mentése. Böngészős végigkattintás nem történt.

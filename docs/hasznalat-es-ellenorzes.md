@@ -17,6 +17,12 @@ Jelenleg ezt az utasítást kézzel lehet átadni egy ChatGPT- vagy Claude-besz�
 7. A kapott választ hozd vissza az **Eredmény ellenőrzése** lépésbe. Képet vagy fájlt az AI felületén nyiss meg; itt írd le, mit néztél meg és mit tapasztaltál.
 8. Értékeld a három szempontot, majd mentsd vagy töltsd le az ellenőrzést.
 
+## Ha kiveszel egy elemet
+
+Az összeállítás tovább szerkeszthető. A **Visszateszem** gomb azonnal visszaállítja a törlés előtti állapotot. A **Másik elemet választok** gomb a teljes elemtárhoz visz. A Javasolt lista a kivett elem helyéhez ajánl pótlást; az elemtár megnevezi, melyik lépés elé illesztünk.
+
+Ha a törlés miatt megszakadt a lépések kapcsolata, az összegzés megmutatja a hiányt. Ezt a használat előtt javítani kell, de közben szabadon hozzáadhatsz, kivehetsz és mozgathatsz elemeket. A korábbi próba nem igazolja automatikusan a módosított tervet.
+
 ## Melyik letöltés hová kerül?
 
 | Művelet | Mit kapsz? | Hová kerül / mire való? |

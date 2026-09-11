@@ -5,7 +5,7 @@ import {ArrowDown,ArrowUp,ArrowUpRight,AudioLines,Check,CheckCheck,ChevronDown,C
 import {Pawn} from '../components/pawn';
 import AgentHandoff from './agent-handoff';
 import {planKey} from '../lib/agent-handoff';
-import {blocks,clonePieces,connection,definition,families,flatten,groupPieces,initialDraft,insertionConnection,issues,kinds,makePieces,parseDraft,placementIndex,recipes,repairSteps,stepLabels,suggestedBlocks,uid,type Block,type Draft,type Family,type Piece} from '../lib/module-builder';
+import {blocks,clonePieces,connection,definition,editingIndex,families,flatten,groupPieces,initialDraft,insertionConnection,issues,kinds,makePieces,parseDraft,placementIndex,recipes,repairSteps,stepLabels,suggestedBlocks,uid,type Block,type Draft,type Family,type Piece} from '../lib/module-builder';
 
 const iconMap:Record<string,typeof Layers3>={spark:Sparkles,audio:AudioLines,file:FileText,clock:Clock,scan:ScanText,align:AlignLeft,table:Table2,pen:PenLine,list:ListChecks,languages:Languages,image:ImageIcon,volume:Volume2,shield:ShieldCheck,hand:Hand,chart:ChartNoAxesCombined,layout:LayoutTemplate,folder:FolderOutput,send:Send,box:Layers3};
 function BlockIcon({block,size=22}:{block:Block;size?:number}){const Icon=iconMap[block.icon]||Layers3;return <Icon size={size} strokeWidth={1.7}/>;}
@@ -18,6 +18,7 @@ export default function ModuleBuilder(){
  const [history,setHistory]=useState<Draft[]>([]),[active,setActive]=useState('');
  const [family,setFamily]=useState<Family|'all'>('all'),[query,setQuery]=useState(''),[showAll,setShowAll]=useState(true);
  const [insertAt,setInsertAt]=useState<number|null>(null);
+ const [removedName,setRemovedName]=useState('');
  const [overCanvas,setOverCanvas]=useState(false),[detailsOpen,setDetailsOpen]=useState(false);
  const [handoffOpen,setHandoffOpen]=useState(false);
  const [previousDraft,setPreviousDraft]=useState<Draft|null>(null),[dirty,setDirty]=useState(false);
@@ -41,18 +42,26 @@ export default function ModuleBuilder(){
  const runningPiece=step>=0?leaves[step]:undefined,currentBlock=runningPiece?definition(runningPiece):undefined;
  const done=leaves.length>0&&step===leaves.length-1;
  const progress=leaves.length?Math.max(0,step+1)/leaves.length*100:0;
- const targetIndex=Math.min(insertAt??draft.pieces.length,draft.pieces.length);
+ const targetIndex=editingIndex(draft.pieces,insertAt);
  const summaryItems=Array.from(leaves.reduce((items,p)=>{const b=definition(p),existing=items.get(b.id);items.set(b.id,{block:b,count:(existing?.count||0)+1});return items;},new Map<string,{block:Block;count:number}>()).values());
 
  useEffect(()=>{if(!playing)return;if(step>=leaves.length-1){setPlaying(false);return;}const timer=window.setTimeout(()=>setStep(s=>s+1),1500);return()=>window.clearTimeout(timer);},[playing,step,leaves.length]);
  function beginEdit(){if(!dirty&&previousDraft){try{localStorage.setItem(`${storageKey}-previous`,JSON.stringify(previousDraft));}catch{/* The original remains recoverable in this session. */}}setDirty(true);}
  function change(next:Draft,message:string){
   try{next=parseDraft(JSON.stringify(next));}catch(error){setNotice(error instanceof Error?error.message:'A terv nem menthető.');return false;}
-  beginEdit();setHistory(h=>[...h.slice(-19),draft]);setDraft(next);setPlaying(false);setStep(-1);setNotice(message);setDragged(null);setDropAt(null);setInsertAt(null);return true;
+  beginEdit();setHistory(h=>[...h.slice(-19),draft]);setDraft(next);setPlaying(false);setStep(-1);setNotice(message);setDragged(null);setDropAt(null);setOverCanvas(false);setInsertAt(null);setGrouping(false);setMarked([]);setHandoffOpen(false);setRemovedName('');return true;
  }
  function revealCard(id:string){window.requestAnimationFrame(()=>document.getElementById(`step-${id}`)?.scrollIntoView({block:'nearest',behavior:motion()}));}
- function showCatalog(index=draft.pieces.length){setInsertAt(index);setShowAll(true);setQuery('');setFamily('all');window.requestAnimationFrame(()=>catalogRef.current?.scrollIntoView({block:'nearest',behavior:motion()}));}
- function undo(){const previous=history.at(-1);if(!previous)return;setDraft(previous);setHistory(h=>h.slice(0,-1));setDetailsOpen(false);setPlaying(false);setStep(-1);setGrouping(false);setInsertAt(null);setActive(previous.pieces[0]?.uid||'');setNotice('Az előző módosítást visszavontuk.');}
+ function showCatalog(index=targetIndex){setInsertAt(index);setShowAll(true);setQuery('');setFamily('all');window.requestAnimationFrame(()=>catalogRef.current?.scrollIntoView({block:'nearest',behavior:motion()}));}
+ function undo(){const previous=history.at(-1);if(!previous)return;setDraft(previous);setHistory(h=>h.slice(0,-1));setDetailsOpen(false);setPlaying(false);setStep(-1);setGrouping(false);setMarked([]);setInsertAt(null);setHandoffOpen(false);setDragged(null);setDropAt(null);setOverCanvas(false);setRemovedName('');setShowAll(true);setQuery('');setFamily('all');setActive(previous.pieces[0]?.uid||'');setNotice('Az előző módosítást visszavontuk. Az összeállítás tovább szerkeszthető.');}
+ function restoreRemoved(){const title=draft.title;undo();setDraft(restored=>({...restored,title}));}
+ function removePiece(piece:Piece){
+  const index=draft.pieces.findIndex(p=>p.uid===piece.uid);if(index<0)return;
+  const name=definition(piece).name,pieces=draft.pieces.filter(p=>p.uid!==piece.uid);
+  if(change({...draft,pieces},`${name}: kivettük. Választhatsz helyette másik elemet, vagy visszateheted.`)){
+   setInsertAt(Math.min(index,pieces.length));setRemovedName(name);setShowAll(true);setQuery('');setFamily('all');setActive('');setDetailsOpen(false);
+  }
+ }
  function add(blockId:string,index=draft.pieces.length,module=false){
   if(draft.pieces.length>=40){setNotice('Egy tervben legfeljebb 40 lépés lehet. Több lépést saját modullá egyesíthetsz.');return;}
   const custom=module?draft.modules.find(m=>m.id===blockId):undefined;if(module&&!custom)return;
@@ -111,19 +120,21 @@ export default function ModuleBuilder(){
    <aside ref={catalogRef} className="mb-palette" aria-label="Képesség választása">
     <div className="mb-panel-heading"><div><span className="mb-eyebrow">INNEN VÁLASSZ</span><h2>Elemek <span>{blocks.length+draft.modules.length}</span></h2></div><Layers3 size={24}/></div>
     <p className="mb-picker-context">Húzd át a nagy mezőbe, vagy kattints a <strong>+</strong> jelre.</p>
+    {draft.pieces.length>0&&targetIndex<draft.pieces.length&&<p className="mb-insertion-context">A következő elemet ide illesztjük: <strong>{definition(draft.pieces[targetIndex]).name} elé.</strong> Ha másik helyre kapcsolódik, ott jelenik meg.</p>}
     <div className="mb-picker-mode"><button aria-pressed={showAll} onClick={()=>setShowAll(true)}>Összes elem</button><button aria-pressed={!showAll} onClick={()=>setShowAll(false)}>Javasolt</button></div>
     <label className="mb-search"><Search size={17}/><input aria-label="Képesség keresése" placeholder="Képesség keresése" value={query} onChange={e=>setQuery(e.target.value)}/>{query&&<button onClick={()=>setQuery('')} aria-label="Keresés törlése"><X size={15}/></button>}</label>
     <details className="mb-field-filters"><summary>Csoportok</summary><div className="mb-family-tabs" aria-label="Képességcsoportok"><button aria-pressed={family==='all'} onClick={()=>setFamily('all')}>Mind</button>{families.map(f=><button key={f.id} aria-pressed={family===f.id} onClick={()=>setFamily(f.id)}>{f.label}</button>)}</div></details>
     <div className="mb-palette-list">
      {palette.map(b=>{return <button key={b.id} className={`mb-palette-block mb-family-${b.family}`} draggable onDragStart={e=>{e.dataTransfer.setData('text/plain',b.id);setDragged({block:b.id});}} onClick={()=>add(b.id,targetIndex)}><span className="mb-mini-icon"><BlockIcon block={b}/></span><span><strong>{b.name}</strong><small>{b.verb}</small></span><Plus size={18}/></button>;})}
      {customPalette.map(m=>{return <button key={m.id} className="mb-palette-block mb-family-sajat" draggable onDragStart={e=>{e.dataTransfer.setData('text/plain',m.id);setDragged({module:m.id});}} onClick={()=>add(m.id,targetIndex,true)}><span className="mb-mini-icon"><Layers3 size={23}/></span><span><strong>{m.name}</strong><small>{`${flatten(m.children).length} lépés együtt`}</small></span><Plus size={18}/></button>;})}
-     {!palette.length&&!customPalette.length&&<div className="mb-palette-empty"><Layers3 size={28}/><strong>{family==='sajat'?'Még nincs saját modul ebben a tervben.':'Nincs ilyen találat.'}</strong><p>Válassz másik csoportot, vagy nézd meg az összes képességet.</p></div>}
+     {!palette.length&&!customPalette.length&&<div className="mb-palette-empty"><Layers3 size={28}/><strong>{family==='sajat'?'Még nincs saját modul ebben a tervben.':'Nincs ilyen találat.'}</strong><p>Másik elemmel is folytathatod a szerkesztést.</p><button className="mb-show-elements" onClick={()=>showCatalog()}>Összes elem mutatása</button></div>}
     </div><p className="mb-palette-foot"><MousePointer2 size={16}/> Kattintásra is a mezőbe kerül.</p>
    </aside>
    <section className="mb-stage" aria-label="A terved lépései">
     <div className="mb-stage-toolbar"><div className="mb-project"><span className="mb-eyebrow">A TERVED</span><label><input aria-label="Összeállítás neve" value={draft.title} maxLength={100} onChange={e=>{beginEdit();setDraft(d=>({...d,title:e.target.value}));}}/><PenLine size={15}/></label></div><div className="mb-tools"><button onClick={undo} disabled={!history.length} aria-label="Utolsó módosítás visszavonása" title="Visszavonás"><RotateCcw size={18}/></button><button onClick={()=>setRecipesOpen(!recipesOpen)} aria-expanded={recipesOpen}><Layers3 size={17}/> Minták <ChevronDown size={14}/></button></div></div>
     {recipesOpen&&<div className="mb-recipes"><div className="mb-panel-heading"><span className="mb-eyebrow">VAGY NÉZZ MEG EGY KÉSZ MINTÁT</span><button onClick={()=>setRecipesOpen(false)} aria-label="Minták bezárása"><X size={18}/></button></div>{recipes.map(r=><button key={r.id} onClick={()=>loadRecipe(r.id)}><span><strong>{r.name}</strong><small>{r.caption}</small></span><ArrowUpRight size={19}/></button>)}<button onClick={startNew}>Saját kezdést választok <Plus size={17}/></button></div>}
     <div className="mb-field-heading"><span><span className="mb-field-number">01</span> Építőmező</span><span>{draft.pieces.length} elem · {leaves.length} lépés</span></div>
+    {removedName&&<div className="mb-removal-recovery" role="status"><div><strong>{removedName}: kivetted.</strong><p>Választhatsz helyette másik elemet, átrendezheted a többit, vagy visszateheted.</p></div><div><button onClick={restoreRemoved}><RotateCcw size={17}/> Visszateszem</button><button onClick={()=>showCatalog()}><Plus size={17}/> Másik elemet választok</button></div></div>}
     {grouping&&<div className="mb-group-form"><h2>Ezeket a lépéseket együtt mentem</h2><p>A kijelölt lépéssornak adj nevet. Később egyetlen kártyaként használhatod másik tervben is. Kattintással módosíthatod a kijelölést.</p><label htmlFor="module-name">A saját modul neve</label><input id="module-name" value={moduleName} onChange={e=>setModuleName(e.target.value)} maxLength={60}/><div><button onClick={saveModule} disabled={marked.length<2||!moduleName.trim()}><Layers3 size={17}/> Mentem együtt ({marked.length})</button><button onClick={()=>setGrouping(false)}>Mégsem</button></div></div>}
     <div ref={canvasRef} className={`mb-canvas mb-drop-field ${overCanvas?'mb-field-hover':''} ${grouping?'mb-grouping':''} ${!draft.pieces.length?'mb-field-empty':''}`} aria-label="Építőmező – ide helyezd az elemeket" onDragOver={e=>{if(dragged){e.preventDefault();e.dataTransfer.dropEffect=dragged.piece?'move':'copy';setOverCanvas(true);}}} onDragLeave={e=>{if(!(e.relatedTarget instanceof Node)||!e.currentTarget.contains(e.relatedTarget))setOverCanvas(false);}} onDrop={e=>drop(e,draft.pieces.length)}>
      {overCanvas&&<div className="mb-drop-feedback"><Plus size={20}/>Engedd el itt – bekerül az összeállításba</div>}
@@ -133,13 +144,13 @@ export default function ModuleBuilder(){
         <button className="mb-element-face" draggable={!grouping} onDragStart={e=>{e.dataTransfer.setData('text/plain',piece.uid);setDragged({piece:piece.uid});}} onClick={()=>{if(grouping)setMarked(m=>m.includes(piece.uid)?m.filter(id=>id!==piece.uid):[...m,piece.uid]);else{setActive(piece.uid);setInspect('block');setDetailsOpen(true);}}} aria-pressed={grouping?isMarked:active===piece.uid}>
          <span className="mb-element-top"><span>{grouping?(isMarked?<Check size={18}/>:<span className="mb-select-box"/>):String(i+1).padStart(2,'0')}</span><GripVertical size={17}/></span><BlockIcon block={b} size={30}/><strong>{b.name}</strong><small>{piece.children?`${flatten(piece.children).length} lépés egy modulban`:b.verb}</small>
         </button>
-        {!grouping&&<div className="mb-element-controls"><button disabled={i===0} onClick={()=>move(i,-1)} aria-label={`${b.name} előrébb`}><ArrowUp size={15}/></button><button disabled={i===draft.pieces.length-1} onClick={()=>move(i,1)} aria-label={`${b.name} hátrébb`}><ArrowDown size={15}/></button><button className="mb-element-remove" onClick={()=>{if(change({...draft,pieces:draft.pieces.filter(p=>p.uid!==piece.uid)},`${b.name}: kivettük. Az összegzés frissült.`)){setActive('');setDetailsOpen(false);}}} aria-label={`${b.name} eltávolítása`}><X size={17}/></button></div>}
+        {!grouping&&<div className="mb-element-controls"><button disabled={i===0} onClick={()=>move(i,-1)} aria-label={`${b.name} előrébb`}><ArrowUp size={15}/></button><button disabled={i===draft.pieces.length-1} onClick={()=>move(i,1)} aria-label={`${b.name} hátrébb`}><ArrowDown size={15}/></button><button className="mb-element-remove" onClick={()=>removePiece(piece)} aria-label={`${b.name} eltávolítása`}><X size={17}/></button></div>}
        </div>;})}
       </div>
       <div className="mb-field-continue"><Plus size={18}/><span>Újabb elemet is ide húzhatsz.</span></div>
       <section className="mb-assembly-summary" aria-label="Az összeállítás összegzése"><div className="mb-summary-heading"><div><span className="mb-eyebrow">A MEZŐ TARTALMA</span><h2>Ezt raktad össze</h2></div><span>{draft.pieces.length} elem<br/><strong>{leaves.length} lépés</strong></span></div>
        <div className="mb-summary-chips">{summaryItems.map(({block:b,count})=><span key={b.id}><BlockIcon block={b} size={17}/>{b.name}{count>1&&<b>×{count}</b>}</span>)}</div>
-       {problems.length>0?<div className="mb-summary-warning"><strong>Az elemek bent vannak. A kapcsolódáson még igazítani kell.</strong>{draft.pieces.every((p,i)=>connection(draft.pieces[i-1],p).ok)&&<p>Egy saját modulon belül hiányzik kapcsolat. Kattints a modulra, és bontsd külön lépésekre a javításhoz.</p>}{draft.pieces.map((p,i)=>{const link=connection(draft.pieces[i-1],p);if(link.ok)return null;const repairIds=repairSteps(draft.pieces,i);return <div key={p.uid}><p>{definition(p).name}: {link.message}</p>{repairIds.length>0&&<button onClick={()=>repair(i)}><Plus size={15}/>{repairIds.map(id=>blocks.find(b=>b.id===id)!.name).join(' + ')} hozzáadása</button>}</div>;})}</div>:<p className="mb-summary-ok"><Link2 size={17}/>A lépések sorrendje összeillik. A használathoz szükséges eszközöket a következő lépésben nézzük meg.</p>}
+       {problems.length>0?<div className="mb-summary-warning"><strong>Az összeállítás tovább szerkeszthető. A használat előtt ezt a kapcsolatot javítsd:</strong>{draft.pieces.every((p,i)=>connection(draft.pieces[i-1],p).ok)&&<p>Egy saját modulon belül hiányzik kapcsolat. Kattints a modulra, és bontsd külön lépésekre a javításhoz.</p>}{draft.pieces.map((p,i)=>{const link=connection(draft.pieces[i-1],p);if(link.ok)return null;const repairIds=repairSteps(draft.pieces,i);return <div key={p.uid}><p>{definition(p).name}: {link.message}</p>{repairIds.length>0&&<button onClick={()=>repair(i)}><Plus size={15}/>{repairIds.map(id=>blocks.find(b=>b.id===id)!.name).join(' + ')} hozzáadása</button>}</div>;})}</div>:<p className="mb-summary-ok"><Link2 size={17}/>A lépések sorrendje összeillik. A használathoz szükséges eszközöket a következő lépésben nézzük meg.</p>}
        <div className="mb-use-next"><div><strong>Mit csinálj ezután?</strong><p>{problems.length?'Előbb javítsd a fenti kapcsolatokat, utána megmutatjuk az átadás menetét.':'Válassz AI-t, add át az utasítást, és ellenőrizd egy próbával.'}</p></div><button disabled={problems.length>0} onClick={openHandoff}>Tovább a használathoz <ArrowUpRight size={19}/></button></div>
       </section>
      </>}

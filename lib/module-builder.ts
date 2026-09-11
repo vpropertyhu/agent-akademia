@@ -112,7 +112,14 @@ const nextOrder: Record<string,string[]> = {
  summarize:['document','tasks','translate'],translate:['review','document','speak'],
  report:['save','read-document'],save:['read-document'],approve:['document','send']
 };
-export function suggestedBlocks(pieces: Piece[], index=pieces.length): Block[] {
+/** A removed step leaves an editable slot; otherwise repair the first broken link. */
+export function editingIndex(pieces:Piece[],preferred:number|null=null):number {
+ if(preferred!==null&&Number.isFinite(preferred))return Math.max(0,Math.min(Math.trunc(preferred),pieces.length));
+ const broken=pieces.findIndex((piece,index)=>!connection(pieces[index-1],piece).ok);
+ return broken<0?pieces.length:broken;
+}
+
+export function suggestedBlocks(pieces: Piece[], index=editingIndex(pieces)): Block[] {
  const previous=pieces[index-1];
  const last=previous?flatten([previous]).at(-1)?.block:undefined;
  const order=last?nextOrder[last]||[]:['request','audio','file','schedule'];
@@ -150,9 +157,13 @@ export function repairSteps(pieces: Piece[], index:number):string[] {
  return [];
 }
 
-/** Prefer a compatible place, but keep unfinished selections visible in the field. */
+/** Repair a missing connection before appending; unfinished selections stay editable. */
 export function placementIndex(pieces:Piece[],candidate:Piece,preferred=pieces.length):number {
  const bounded=Math.max(0,Math.min(preferred,pieces.length));
+ const positions=[bounded,...pieces.map((_,index)=>index).filter(index=>index!==bounded)];
+ for(const index of positions){
+  if(pieces[index]&&!connection(pieces[index-1],pieces[index]).ok&&insertionConnection(pieces,index,candidate).ok)return index;
+ }
  if(insertionConnection(pieces,bounded,candidate).ok)return bounded;
  for(let i=0;i<=pieces.length;i++)if(insertionConnection(pieces,i,candidate).ok)return i;
  return bounded;
