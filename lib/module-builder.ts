@@ -45,7 +45,7 @@ export const initialDraft = (): Draft => ({version:1,title:'Az én agentem',piec
 export function definition(piece: Piece): Block {
  if (piece.children?.length) {
   const first=definition(piece.children[0]), last=definition(piece.children[piece.children.length-1]);
-  return {id:piece.block,name:piece.name||'Saját modul',verb:`${flatten(piece.children).length} képesség egy modulban`,description:'Saját összeállítás. Belenézhetsz, szétnyithatod, és másik agentbe is beillesztheted.',family:'sajat',inputs:first.inputs,output:last.output,icon:'box',sample:last.sample,needs:[...new Set(flatten(piece.children).map(p=>definition(p).needs).filter(Boolean))].join(', ')||undefined};
+  return {id:piece.block,name:piece.name||'Saját modul',verb:`${flatten(piece.children).length} képesség egy modulban`,description:'Saját összeállítás. Belenézhetsz, szétnyithatod, és másik itteni építési tervbe is beillesztheted.',family:'sajat',inputs:first.inputs,output:last.output,icon:'box',sample:last.sample,needs:[...new Set(flatten(piece.children).map(p=>definition(p).needs).filter(Boolean))].join(', ')||undefined};
  }
  const found=blocks.find(b=>b.id===piece.block);
  if(!found) throw new Error('Ismeretlen elem.');

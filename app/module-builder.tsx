@@ -3,6 +3,8 @@
 import {useEffect,useMemo,useRef,useState,type DragEvent} from 'react';
 import {ArrowDown,ArrowUp,ArrowUpRight,AudioLines,Check,CheckCheck,ChevronDown,ChevronRight,Clock,Download,FileText,FolderOutput,GripVertical,Image as ImageIcon,Languages,Layers3,LayoutTemplate,ListChecks,Maximize2,MousePointer2,Pause,PenLine,Play,Plus,RotateCcw,ScanText,Search,Send,ShieldCheck,Sparkles,Table2,Trash2,Upload,Volume2,X,Hand,ChartNoAxesCombined,AlignLeft,BookOpen,Link2} from 'lucide-react';
 import {Pawn} from '../components/pawn';
+import AgentHandoff from './agent-handoff';
+import {planKey} from '../lib/agent-handoff';
 import {blocks,clonePieces,connection,definition,families,flatten,groupPieces,initialDraft,insertionConnection,issues,kinds,makePieces,parseDraft,placementIndex,recipes,repairSteps,stepLabels,suggestedBlocks,uid,type Block,type Draft,type Family,type Piece} from '../lib/module-builder';
 
 const iconMap:Record<string,typeof Layers3>={spark:Sparkles,audio:AudioLines,file:FileText,clock:Clock,scan:ScanText,align:AlignLeft,table:Table2,pen:PenLine,list:ListChecks,languages:Languages,image:ImageIcon,volume:Volume2,shield:ShieldCheck,hand:Hand,chart:ChartNoAxesCombined,layout:LayoutTemplate,folder:FolderOutput,send:Send,box:Layers3};
@@ -17,6 +19,7 @@ export default function ModuleBuilder(){
  const [family,setFamily]=useState<Family|'all'>('all'),[query,setQuery]=useState(''),[showAll,setShowAll]=useState(true);
  const [insertAt,setInsertAt]=useState<number|null>(null);
  const [overCanvas,setOverCanvas]=useState(false),[detailsOpen,setDetailsOpen]=useState(false);
+ const [handoffOpen,setHandoffOpen]=useState(false);
  const [previousDraft,setPreviousDraft]=useState<Draft|null>(null),[dirty,setDirty]=useState(false);
  const [notice,setNotice]=useState('Húzz egy elemet az üres mezőbe, vagy kattints az elemtárban a + jelre.');
  const [help,setHelp]=useState(false),[recipesOpen,setRecipesOpen]=useState(false);
@@ -86,7 +89,8 @@ export default function ModuleBuilder(){
  function startNew(){if(draft.pieces.length){setPreviousDraft(draft);try{localStorage.setItem(`${storageKey}-previous`,JSON.stringify(draft));}catch{/* Undo remains available in this session. */}}if(change({...draft,title:'Az én agentem',pieces:[]},'Az építőmező üres. Az előző állapot visszavonással helyreállítható.')){setGrouping(false);setRecipesOpen(false);setActive('');setDetailsOpen(false);}}
  function preview(){if(!draft.pieces.length||problems.length)return;if(playing){setPlaying(false);return;}setInspect('result');setDetailsOpen(true);if(done||step<0)setStep(0);setPlaying(true);setNotice('Előre megírt példa halad végig a lépéseken. Ez a bemutató nem használ AI-t.');}
  function revealTrial(){preview();window.requestAnimationFrame(()=>trialRef.current?.scrollIntoView({block:'nearest',behavior:motion()}));}
- function download(){const blob=new Blob([JSON.stringify(draft,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),anchor=document.createElement('a');anchor.href=url;anchor.download='agent-akademia-epitesi-terv.json';anchor.click();window.setTimeout(()=>URL.revokeObjectURL(url),5000);setNotice('A tervet JSON-fájlként elmentheted, majd itt visszatöltheted. Ez még nem futtatható agent.');}
+ function download(){const blob=new Blob([JSON.stringify(draft,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),anchor=document.createElement('a');anchor.href=url;anchor.download='agent-akademia-epitesi-terv.json';anchor.click();window.setTimeout(()=>URL.revokeObjectURL(url),5000);setNotice('A böngésződ a beállított letöltési helyre menti a tervet, vagy mappát kérdez. A JSON-t itt töltheted vissza; nem telepít semmit egy AI-ba.');}
+ function openHandoff(){setHandoffOpen(true);setDetailsOpen(false);setPlaying(false);window.requestAnimationFrame(()=>document.getElementById('agent-handoff')?.scrollIntoView({block:'start',behavior:motion()}));}
  async function importFile(file:File|undefined){if(!file)return;try{if(file.size>500_000)throw new Error('Legfeljebb 500 kB-os tervet válassz.');const next=parseDraft(await file.text());if(change(next,'A tervet betöltöttük.')){setActive(next.pieces[0]?.uid||'');setGrouping(false);setDetailsOpen(false);}}catch(error){setNotice(error instanceof Error?error.message:'A terv nem olvasható.');}if(importRef.current)importRef.current.value='';}
  const available=suggestedBlocks(draft.pieces,targetIndex);
  const catalogueOrder=['write','file','image','summarize','transcribe','document'];
@@ -98,11 +102,11 @@ export default function ModuleBuilder(){
   <header className="mb-header">
    <a className="mb-brand" href="/" aria-label="Agent Akadémia kezdőlap"><Pawn size={35}/><span>Agent <b>Akadémia</b></span></a>
    <nav aria-label="Főmenü"><a className="mb-nav-active" href="/">Építőműhely</a><a href="/alkotas">Szövegalkotó <ArrowUpRight size={14}/></a><button onClick={()=>setHelp(!help)} aria-expanded={help}><BookOpen size={16}/> Segítség</button></nav>
-   <span className="mb-lab">TERVEZŐ ÉS BEMUTATÓ</span>
+   <span className="mb-lab">ÉPÍTÉS · ÁTADÁS · PRÓBA</span>
   </header>
   <section className="mb-intro"><div><span className="mb-eyebrow">VÁLASSZ ELEMEKET. ÉPÍTS SAJÁT AGENTET.</span><h1>Egy mező. <em>A te összeállításod.</em></h1><p>Húzd az elemeket a nagy mezőbe. Ugyanott látod, mit raktál össze.</p></div><button className="mb-start-new" onClick={startNew}><Plus size={17}/> Új, üres mező</button></section>
   {previousDraft&&!dirty&&<div className="mb-restore"><span>Van egy elmentett terved: <strong>{previousDraft.title}</strong> · {previousDraft.pieces.length} elem{previousDraft.modules.length>0?` · ${previousDraft.modules.length} saját modul`:''}</span><button onClick={()=>{if(change(previousDraft,'Az előző tervedet visszatöltöttük a mezőbe.'))setActive('');}}><RotateCcw size={16}/> Visszatöltöm</button></div>}
-  {help&&<section className="mb-guide"><button className="mb-close" onClick={()=>setHelp(false)} aria-label="Segítség bezárása"><X size={19}/></button><h2>Minden egy helyre kerül.</h2><p>Az elemtárból fogj meg egy képességet, és engedd el a nagy, szaggatott keretű mezőben. Kattintással is hozzáadhatod. A mezőben az összes választott elem együtt látszik, alatta pedig a képességeik összegzése.</p><p>Az elemeket a mezőn belül is mozgathatod. Ha valamelyik kapcsolatból hiányzik egy lépés, az összegzésnél megmutatjuk. A bemutató előre megírt mintával működik; valódi AI-futtatás még nincs bekötve.</p></section>}
+  {help&&<section className="mb-guide"><button className="mb-close" onClick={()=>setHelp(false)} aria-label="Segítség bezárása"><X size={19}/></button><h2>Összeállítás → átadás → ellenőrzés.</h2><p>Tedd az elemeket a nagy mezőbe. Az összegzés alatt válaszd a „Tovább a használathoz” gombot: megmutatjuk, melyik AI-ban és pontosan hová másold az utasítást. Kapsz próbafeladatot és ellenőrzőlistát is.</p><p>A másik AI eredményét te hozod vissza, és a saját ellenőrzésedet itt mentheted el. A tervfájl csak az itteni összeállítást őrzi; nem telepítő. A Bemutató továbbra is előre megírt példa.</p></section>}
   <main className="mb-workbench mb-single-field">
    <aside ref={catalogRef} className="mb-palette" aria-label="Képesség választása">
     <div className="mb-panel-heading"><div><span className="mb-eyebrow">INNEN VÁLASSZ</span><h2>Elemek <span>{blocks.length+draft.modules.length}</span></h2></div><Layers3 size={24}/></div>
@@ -135,11 +139,13 @@ export default function ModuleBuilder(){
       <div className="mb-field-continue"><Plus size={18}/><span>Újabb elemet is ide húzhatsz.</span></div>
       <section className="mb-assembly-summary" aria-label="Az összeállítás összegzése"><div className="mb-summary-heading"><div><span className="mb-eyebrow">A MEZŐ TARTALMA</span><h2>Ezt raktad össze</h2></div><span>{draft.pieces.length} elem<br/><strong>{leaves.length} lépés</strong></span></div>
        <div className="mb-summary-chips">{summaryItems.map(({block:b,count})=><span key={b.id}><BlockIcon block={b} size={17}/>{b.name}{count>1&&<b>×{count}</b>}</span>)}</div>
-       {problems.length>0?<div className="mb-summary-warning"><strong>Az elemek bent vannak. A kapcsolódáson még igazítani kell.</strong>{draft.pieces.every((p,i)=>connection(draft.pieces[i-1],p).ok)&&<p>Egy saját modulon belül hiányzik kapcsolat. Kattints a modulra, és bontsd külön lépésekre a javításhoz.</p>}{draft.pieces.map((p,i)=>{const link=connection(draft.pieces[i-1],p);if(link.ok)return null;const repairIds=repairSteps(draft.pieces,i);return <div key={p.uid}><p>{definition(p).name}: {link.message}</p>{repairIds.length>0&&<button onClick={()=>repair(i)}><Plus size={15}/>{repairIds.map(id=>blocks.find(b=>b.id===id)!.name).join(' + ')} hozzáadása</button>}</div>;})}</div>:<p className="mb-summary-ok"><Link2 size={17}/>A kiválasztott elemek kapcsolódnak egymáshoz.</p>}
+       {problems.length>0?<div className="mb-summary-warning"><strong>Az elemek bent vannak. A kapcsolódáson még igazítani kell.</strong>{draft.pieces.every((p,i)=>connection(draft.pieces[i-1],p).ok)&&<p>Egy saját modulon belül hiányzik kapcsolat. Kattints a modulra, és bontsd külön lépésekre a javításhoz.</p>}{draft.pieces.map((p,i)=>{const link=connection(draft.pieces[i-1],p);if(link.ok)return null;const repairIds=repairSteps(draft.pieces,i);return <div key={p.uid}><p>{definition(p).name}: {link.message}</p>{repairIds.length>0&&<button onClick={()=>repair(i)}><Plus size={15}/>{repairIds.map(id=>blocks.find(b=>b.id===id)!.name).join(' + ')} hozzáadása</button>}</div>;})}</div>:<p className="mb-summary-ok"><Link2 size={17}/>A lépések sorrendje összeillik. A használathoz szükséges eszközöket a következő lépésben nézzük meg.</p>}
+       <div className="mb-use-next"><div><strong>Mit csinálj ezután?</strong><p>{problems.length?'Előbb javítsd a fenti kapcsolatokat, utána megmutatjuk az átadás menetét.':'Válassz AI-t, add át az utasítást, és ellenőrizd egy próbával.'}</p></div><button disabled={problems.length>0} onClick={openHandoff}>Tovább a használathoz <ArrowUpRight size={19}/></button></div>
       </section>
      </>}
     </div>
     <div className="mb-stage-bottom"><button className="mb-make-module" disabled={draft.pieces.length<2} onClick={toggleGroup}><Layers3 size={19}/><span>{grouping?'Kijelölés bezárása':'Lépéseket együtt mentek'}</span></button><button className="mb-field-preview" onClick={revealTrial} disabled={!draft.pieces.length||problems.length>0}><Play size={17}/> Bemutató</button></div>
+    {handoffOpen&&draft.pieces.length>0&&problems.length===0&&<div id="agent-handoff"><AgentHandoff key={planKey(draft)} draft={draft} onClose={()=>{setHandoffOpen(false);canvasRef.current?.scrollIntoView({block:'start',behavior:motion()});}}/></div>}
    </section>
    {detailsOpen&&<aside className="mb-inspector" aria-label="Bemutató és részletek"><button className="mb-detail-close" onClick={()=>{setDetailsOpen(false);setPlaying(false);}}><X size={17}/> Részletek bezárása</button>
     <div className="mb-inspector-tabs"><button aria-pressed={inspect==='result'} onClick={()=>setInspect('result')}>Bemutató</button><button aria-pressed={inspect==='block'} onClick={()=>setInspect('block')}>Lépés részletei</button></div>
@@ -154,6 +160,7 @@ export default function ModuleBuilder(){
    </aside>}
   </main>
   <div className="mb-notice" role="status" aria-live="polite"><CheckCheck size={16}/>{notice}</div>
-  <footer className="mb-footer"><div className="mb-save-state"><span className={`mb-status-dot ${saved?'':'mb-dot-error'}`}/>{saved?'Ezen a böngészőn mentve':dirty?'Helyi mentésre vár':'Az üres mező még nem módosítja a mentéseidet'}</div><div><input ref={importRef} type="file" accept=".json,application/json" className="mb-sr-only" tabIndex={-1} onChange={e=>void importFile(e.target.files?.[0])}/><button onClick={()=>importRef.current?.click()}><Upload size={16}/>Terv betöltése</button><button onClick={download}><Download size={16}/>Terv letöltése</button></div></footer>
+  <footer className="mb-footer"><div className="mb-save-state"><span className={`mb-status-dot ${saved?'':'mb-dot-error'}`}/>{saved?'Ezen a böngészőn mentve':dirty?'Helyi mentésre vár':'Az üres mező még nem módosítja a mentéseidet'}</div><div><input ref={importRef} type="file" accept=".json,application/json" className="mb-sr-only" tabIndex={-1} onChange={e=>void importFile(e.target.files?.[0])}/><button onClick={()=>importRef.current?.click()}><Upload size={16}/>Terv visszatöltése</button><button onClick={download}><Download size={16}/>Építési terv mentése (.json)</button></div></footer>
+  <p className="mb-export-explanation">A JSON-fájl az itteni terv visszatöltésére való. AI-ban való használathoz válaszd az összegzésnél a „Tovább a használathoz” gombot.</p>
  </div>;
 }

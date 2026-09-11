@@ -91,3 +91,16 @@ Megvalósítás:
 Ellenőrzés: a TypeScript és a célzott logikai vizsgálatok sikeresek az üres indulásra, az elemek elhelyezésére, a hiányos összeállítás megtartására, a régi JSON-mentésre és a saját modul belső lépésszámára. A webes kiadási build következik. Böngészős végigkattintás nem történt.
 
 A mentésmegőrzés az üres mezővel, de saját modulokkal vagy egyedi névvel rendelkező tervekre is kiterjed. A leejtés egyszeri feldolgozását és a belső lépések számolását külön forrásellenőrzés is megerősítette.
+
+
+## 8. mentési pont – vezetett átadás és ellenőrzés
+
+Az összegzésben megjelent a Tovább a használathoz főgomb. Három lépés vezeti végig a használót: célválasztás, kézi átadás és próbafeladat, a visszahozott eredmény felhasználói ellenőrzése. Az eredeti egymezős építő és arculat megmaradt.
+
+A kiválasztott modulokból ténylegesen másolható munkautasítás készül, a beágyazott lépések kibontásával. ChatGPT- és Claude-cél választható. A felület megmondja, hogy az utasítás az új beszélgetés üzenetmezőjébe kerül, a letöltés pedig a böngésző beállításai szerint ment fájlt. Az útmutató TXT-fájlként letölthető; a JSON csak az itteni terv visszatöltésére szolgál.
+
+Minden képességhez megjelenik, hogy szöveges utasítás, további eszköz vagy külön kapcsolat kell-e hozzá. A saját gépes moduláris futtató nem telepíthető még; ezt a célválasztó közli. Nem állítunk automatikus telepítést vagy külső futáskövetést.
+
+A próbanapló az adott tervhez, célhoz és feladathoz kötött felhasználói értékelést őrzi, legfeljebb 20 bejegyzéssel ezen a böngészőn. Terv- vagy próbaváltoztatás nem örököl korábbi megfelelt állapotot. Eredmény átírásakor az ellenőrző jelölések törlődnek. Részleges ellenőrzés nem kap megfelelt állapotot. A korábbi mentett állapot dátummal elkülönül a jelenlegi szerkesztett értékeléstől. Sérült naplót nem írunk felül. Az eredmény és értékelés olvasható fájlba letölthető.
+
+A célzott logikai ellenőrzések sikeresek a változatkötésre, a beágyazott sorrendre, a célok képességbesorolására, az átadási korlátokra, az értékelési állapotokra és a naplóvalidációra. A végső kiadás állapotát a külön folyamatos mentés elején rögzítjük. Böngészős végigkattintás és tényleges külső AI-próba nem történt.
