@@ -1,3 +1,2 @@
-import Workspace from './workspace';
-export const dynamic = 'force-dynamic';
-export default function Page() { return <Workspace view="studio" />; }
+import ModuleBuilder from './module-builder';
+export default function Page() { return <ModuleBuilder />; }

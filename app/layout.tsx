@@ -4,10 +4,11 @@ import "./daily.css";
 import "./simple.css";
 import "./ai.css";
 import "./brand.css";
+import "./module-builder.css";
 
 export const metadata: Metadata = {
-  title: "Agent Akadémia | Kész agentek, a te munkádra",
-  description: "Tanuld meg használni az első AI-munkatársadat. Vezetett első feladat, céges háttér, új tartalom és saját gépre letölthető Tartalomkészítő.",
+  title: "Agent Akadémia | Kockáról kockára. A te agented.",
+  description: "Építs képességekből saját agenttervet. Illeszthető kockák, újra használható modulok és érthető, lépésenkénti szemléltetés.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
