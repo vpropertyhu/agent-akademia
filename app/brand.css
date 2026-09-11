@@ -1,0 +1,42 @@
+/* Original Claude identity: foter/agens/agens.css and the supplied graphic package.
+   Preserve its wordmark, pawn, colors, spacing, dark opening band and four facts.
+   The content describes only the capabilities implemented in this application. */
+:root{--papir:#f1eee7;--lap:#fff;--keret:#d9d3c7;--tinta:#14110f;--halvany:#6b655c;--ejszaka:#2a211b;--ejszaka-szoveg:#f2eee6;--arany:#e09b12;--arany-mely:#8f5d07;--arany-halk:#fbf0d8;--t1:6px;--t2:10px;--t3:16px;--t4:24px;--t5:40px;--t6:72px;--sugar:10px;--sugar-kicsi:6px;--arnyek:0 1px 2px rgb(20 17 15 / 5%),0 10px 26px rgb(20 17 15 / 6%);color-scheme:light}
+.brand-gold{color:var(--arany)}
+.local-wordmark{display:flex;align-items:center;gap:var(--t2)}
+.local-wordmark>span{font:inherit;color:inherit}
+.public-brand{font-weight:700;letter-spacing:-.02em;font-size:1.3rem}
+.public-header{padding-top:var(--t3);padding-bottom:var(--t3)}
+.public-header nav button,.public-header nav a{font-size:.94rem}
+.local-main{max-width:1120px;padding:var(--t5) 20px var(--t6)}
+.ai-studio{max-width:1080px}
+.ai-opening{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:var(--t5);align-items:center;padding:var(--t5);margin:0 0 var(--t5);background:var(--ejszaka);color:var(--ejszaka-szoveg);border-radius:var(--sugar)}
+.ai-opening::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(to bottom,rgba(242,238,230,.06) 1px,transparent 1px) 0 0/100% 32px,linear-gradient(to right,rgba(242,238,230,.06) 1px,transparent 1px) 0 0/32px 100%;mask-image:radial-gradient(120% 120% at 15% 0%,#000 0%,transparent 70%)}
+.ai-opening:has(>.ai-intro:only-child){grid-template-columns:1fr}
+.ai-intro{margin:0}
+.ai-intro h1{font-size:clamp(2.1rem,1.4rem + 2.6vw,3.4rem);line-height:1.06;letter-spacing:-.025em;margin:var(--t3) 0 var(--t4);text-wrap:balance}
+.ai-intro>p{font-size:1rem;line-height:1.6;color:#d7cfc4;margin:0;max-width:58ch}
+.ai-opening .ai-intro .eyebrow{color:var(--arany);font-size:.78rem}
+.ai-opening .ai-agent-card{display:grid;grid-template-columns:40px minmax(0,1fr);gap:var(--t3);margin:0;padding:var(--t4);color:var(--tinta);background:var(--lap);border-radius:var(--sugar);box-shadow:var(--arnyek)}
+.ai-agent-card>svg{width:40px;height:40px;align-self:center}
+.ai-agent-card h2{font-size:1.5rem;margin:var(--t1) 0}
+.ai-agent-card p{margin:0;font-size:.875rem}
+.ai-agent-card .eyebrow{color:var(--tinta);font-size:.75rem}
+.ai-rank{grid-column:1/-1;justify-self:start;margin:0;padding:var(--t1) var(--t2);background:var(--arany);color:var(--tinta);font:700 .75rem/1.3 ui-monospace,monospace;border-radius:3px}
+.ai-agent-facts{grid-column:1/-1;margin:0;border-top:1px solid var(--keret)}
+.ai-agent-facts>div{padding:var(--t2) 0;border-bottom:1px solid var(--keret)}
+.ai-agent-facts>div:last-child{border:0;padding-bottom:0}
+.ai-agent-facts dt{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--halvany);margin-bottom:4px}
+.ai-agent-facts dd{margin:0;font:700 .94rem/1.4 Fraunces,Georgia,serif}
+.ai-panel,.public-account details,.local-setup{border-radius:var(--sugar);box-shadow:var(--arnyek)}
+.ai-panel{padding:var(--t4);margin:var(--t4) 0}
+.ai-lessons{margin:var(--t6) 0 var(--t5)}
+.ai-lessons>h2{display:flex;align-items:center;gap:var(--t3)}
+.ai-lessons>h2::after{content:"";flex:1;height:3px;background:linear-gradient(to right,var(--arany) 0 56px,var(--keret) 56px)}
+.ai-lesson-grid p,.ai-lessons details p{font-size:1rem;line-height:1.6}
+.ai-lesson-grid article>span{display:inline-block;background:var(--arany);color:var(--tinta);font:700 .8rem/1.3 ui-monospace,monospace;border-radius:3px;padding:3px 7px}
+.ai-take-home{padding:var(--t5);border-radius:var(--sugar)}
+.ai-caption,.local-note,.public-footer,.ai-profile summary span,.ai-studio .field-note{font-size:.875rem!important}
+.ai-studio .eyebrow{letter-spacing:.13em}
+@media(max-width:900px){.ai-opening{grid-template-columns:1fr;gap:var(--t4);padding:var(--t4)}.ai-intro h1{max-width:18ch}.ai-opening .ai-agent-card{grid-template-columns:40px minmax(0,1fr)}.ai-agent-facts{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--t3)}.ai-agent-facts>div:nth-last-child(2){border-bottom:0}}
+@media(max-width:600px){.local-main{padding:var(--t4) var(--t3) var(--t5)}.ai-opening{padding:var(--t4) var(--t3)}.ai-opening .ai-agent-card{padding:var(--t3)}.ai-agent-facts{grid-template-columns:1fr}.ai-agent-facts>div:nth-last-child(2){border-bottom:1px solid var(--keret)}.ai-take-home{padding:var(--t4)}.public-header nav button,.public-header nav a{font-size:.875rem}.local-wordmark>span{font-size:1.15rem}.ai-lessons>h2::after{display:none}}
