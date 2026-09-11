@@ -48,3 +48,26 @@ A szerkesztési módosítások és az import ugyanazt a méret- és mélységell
 Ellenőrzés: TypeScript-hiba nélkül fordul. Célzott logikai ellenőrzések sikeresek az illesztésre, a hídkocka-ajánlásra, az összecsukásra, az import/export körútra és a másolatok függetlenségére. A Sites és a hordozható Netlify build sikeres. Böngészős végigkattintás és valódi AI-futtatás nem történt.
 
 A webes kiadás mentése és közzététele a következő lépés. Ez a napló nem állítja, hogy a jelenlegi új verzió már élőben elérhető.
+
+## 4. mentési pont – kapcsolódó képességkártyák és vezetett építés
+
+Új felhasználói döntés: a LEGO-szerű alakzatokat elhagyjuk. A korábbi kocka-metafora történeti előzmény; a jelenlegi irány kapcsolódó képességkártyákból áll. Az eredeti barna–papír–arany arculat megmarad.
+
+Elkészült:
+
+- Sík, ívelt képességkártyák számozással és látható csatlakozással; nincs LEGO-bütyök vagy térbeli kockaoldal.
+- Az új látogató egyetlen kezdőlépést kap. A sor végén a „Mit csináljon ezután?” kérdés alatt legfeljebb három oda illő választás jelenik meg.
+- Kattintásra a kiválasztott képesség azonnal bekerül és összekapcsolódik. Húzásra nincs szükség.
+- A teljes képességtár alapból zárva van. A „További képességek” gombbal nyitható; alapból csak az adott helyre illő elemeket mutatja.
+- Középre szúrásnál mindkét szomszédot és az összetett modul belső kapcsolatait is ellenőrizzük. A nem illő hozzáadás nem módosítja a tervet.
+- Állandó háromlépéses útmutatás: kezdés, következő képesség, bemutató.
+- A kártyák feliratai mondatként olvashatók: „Megkapja a kérésed”, „Megírja a szöveget”, „Átnézi a szöveget”.
+- A saját modul művelete érthetőbb nevet kapott: „Lépéseket együtt mentek”.
+- A korábbi helyi és JSON-mentések kompatibilisek maradnak. Az új alapminta nem írja felül a mentett tervet.
+- Olvashatóbb betűméretek és nagyobb vezérlők, mobilra igazított elrendezés.
+
+Ellenőrzés: a TypeScript-fordítás és a célzott logikai vizsgálatok sikeresek. Ellenőrizve a kétoldali illesztés, a kezdő és következő ajánlás, az összetett modul hibája, valamint a négy korábbi minta és saját modul JSON-körútja. A végső kiadási build és publikálás következik.
+
+A bemutató továbbra is előre megírt mintát használ. A valódi AI-futtatás nem része ennek a felületegyszerűsítésnek.
+
+A negyedik mentési pont ellenőrzésekor két további javítás készült: a régi, több köztes lépést hiányoló terveknél a felület egyben felajánlja a szükséges átalakítási sort; a húzás előjelzése és az áthelyezés elfogadása a teljes módosított sorra ugyanazt a szabályt használja. Célzott ellenőrzés igazolta a kérés → írás → dokumentum → mentés javítást is.

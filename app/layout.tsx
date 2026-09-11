@@ -7,8 +7,8 @@ import "./brand.css";
 import "./module-builder.css";
 
 export const metadata: Metadata = {
-  title: "Agent Akadémia | Kockáról kockára. A te agented.",
-  description: "Építs képességekből saját agenttervet. Illeszthető kockák, újra használható modulok és érthető, lépésenkénti szemléltetés.",
+  title: "Agent Akadémia | Lépésről lépésre. A te agented.",
+  description: "Építs képességekből saját agenttervet. Egy kattintással kapcsolódó képességkártyák, újra használható modulok és érthető, lépésenkénti szemléltetés.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
