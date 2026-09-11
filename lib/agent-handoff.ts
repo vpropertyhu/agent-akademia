@@ -5,33 +5,34 @@ export type Delivery={mode:'text'|'tool'|'connection';label:string;detail:string
 export const destinations={chatgpt:{name:'ChatGPT',url:'https://chatgpt.com/'},claude:{name:'Claude',url:'https://claude.ai/'},local:{name:'Saját gép',url:''}};
 export function planKey(draft:Draft):string {
  const clean=(pieces:Piece[]):unknown[]=>pieces.map(p=>({block:p.block,...(p.children?{name:p.name,children:clean(p.children)}:{})}));
- return JSON.stringify({title:draft.title,pieces:clean(draft.pieces)});
+ return JSON.stringify({title:draft.title,pieces:clean(draft.pieces),...(draft.request?.trim()?{request:draft.request.trim()}:{})});
 }
 export function delivery(block:string,destination:Destination):Delivery {
- const text=(detail:string):Delivery=>({mode:'text',label:'Utasításként átadható',detail});
- const tool=(detail:string):Delivery=>({mode:'tool',label:'Eszköz is kell hozzá',detail});
- const connection=(detail:string):Delivery=>({mode:'connection',label:'Külön bekötés kell',detail});
- if(destination==='local')return connection('A moduláris tervhez még nincs telepíthető helyi futtató. A tervfájl nem indítja el ezt a lépést.');
+ const text=(detail:string):Delivery=>({mode:'text',label:'Bemásolással kérhető',detail});
+ const tool=(detail:string):Delivery=>({mode:'tool',label:'Az AI-nak ezt is tudnia kell',detail});
+ const connection=(detail:string):Delivery=>({mode:'connection',label:'Ehhez külön beállítás kell',detail});
+ if(destination==='local')return connection('A gépedre telepíthető segítő még nincs kész. Az összeállítás letöltése önmagában nem indítja el a feladatot.');
  switch(block){
-  case 'schedule':return connection('Az időzítést a célalkalmazásban vagy külön futtatóban kell beállítani. A bemásolás nem hoz létre ütemezést.');
-  case 'save':return connection('Egy gépeden lévő mappába mentéshez engedélyezett fájlkapcsolat kell. A letöltött fájlt te tudod a mappába tenni.');
-  case 'graphic':return connection('Grafikai szerkesztő és hozzáférés szükséges. A szöveges leírás nem Canva-fájl, és nem helyez el semmit a Canvában.');
-  case 'audio':case 'transcribe':return tool('A tényleges hangfájlt is át kell adnod, és a célban hangfeldolgozás szükséges. Ha nem támogatott, itt meg kell állni.');
-  case 'ocr':return tool('A képfájlt is csatolnod kell egy képet olvasni képes beszélgetéshez. A fájl nem kerül át ezzel az utasítással.');
-  case 'read-document':return tool('A dokumentumot külön csatold. Az AI csak akkor olvashatja, ha a fájltípus feldolgozását támogatja.');
-  case 'image':return tool(destination==='claude'?'Bekötött képgeneráló eszköz szükséges. Egy képleírás elkészítése még nem képgenerálás.':'A beszélgetésben elérhető képgeneráló eszköz szükséges. Csak a ténylegesen létrejött kép számít eredménynek.');
-  case 'speak':return tool('Hangot előállító eszköz szükséges. A leírt szöveg önmagában nem hangfájl.');
-  case 'document':case 'report':return tool('Rendezett szöveg kérhető; valódi letölthető dokumentumhoz fájlkészítő eszköz is kell. A kettőt az eredménynél külön jelezze.');
-  case 'file':return text('A feldolgozandó szöveget te másolod be; fájl esetén külön csatolás és fájlfeldolgozás szükséges.');
-  case 'approve':return text('Kérheted, hogy várja meg az igenedet a beszélgetésben. Ez nem technikailag kikényszerített engedélyezési kapu.');
-  case 'send':return text('Üzenetvázlat készülhet. Valódi elküldéshez külön kapcsolat és engedély kell; ezt a csomag nem kapcsolja be.');
-  case 'review':case 'table-check':return text('Átnézési szempontokat adunk át. Az AI saját „rendben” válasza nem független bizonyíték a helyességre.');
-  default:return text('A lépést a bemásolt utasítás és a megadott feladat alapján kérheted a beszélgetésben.');
+  case 'schedule':return connection('Az ismétlést külön kell beállítani egy erre alkalmas programban. Az itt bemásolt szöveg ezt nem állítja be.');
+  case 'save':return connection('Ez az oldal még nem tud a géped mappáiba menteni. A kész fájlt te töltheted le, és teheted a kívánt mappába.');
+  case 'graphic':return connection('Ehhez egy képszerkesztőt, például a Canvát is csatlakoztatni kell. Az itt másolt szövegtől még nem készül benne szerkeszthető anyag.');
+  case 'audio':case 'transcribe':return tool('Csatold a hangfelvételt a választott AI-ban. Ha az AI nem tud hangot feldolgozni, ezt a feladatot nem tudja elvégezni.');
+  case 'ocr':return tool('Csatold a képet a választott AI-ban. Az AI-nak tudnia kell képet olvasni; a szöveg másolása nem csatolja a képet.');
+  case 'read-document':return tool('A dokumentumot külön csatold az AI-ban. Ha nem tudja megnyitni, másik fájlformátumot kell választanod.');
+  case 'image':return tool(destination==='claude'?'Ehhez képkészítő programot is csatlakoztatni kell. Egy kép leírása még nem elkészült kép.':'Az AI-ban elérhetőnek kell lennie a képkészítésnek. Az eredmény az elkészült kép, nem a kép leírása.');
+  case 'speak':return tool('Beszédet készítő program szükséges hozzá. A leírt szöveg önmagában még nem hallgatható hang.');
+  case 'document':case 'report':return tool('Letölthető dokumentum csak akkor készül, ha az AI fájlt is tud készíteni. Különben a szöveget kapod meg a beszélgetésben.');
+  case 'file':return text('Másold be a saját szövegedet az AI beszélgetésébe. Ha fájlt használsz, azt külön kell csatolnod.');
+  case 'approve':return text('Megkérjük az AI-t, hogy várja meg a válaszodat. Itt nem tudjuk automatikusan megállítani; neked kell figyelned, hogy kivárta-e.');
+  case 'send':return text('Az üzenetet megírhatja. Az elküldéshez külön kell csatlakoztatni a levelezőt vagy üzenetküldőt; azt ez az oldal nem állítja be.');
+  case 'review':case 'table-check':return text('Megkérjük az AI-t, hogy nézze át a munkát. Utána te is ellenőrizd: a saját „rendben” válaszától még lehet benne hiba.');
+  default:return text('A bemásolt szöveg megmondja az AI-nak, mit kérsz tőle.');
  }
 }
 
 export function exampleTask(draft:Draft){
  const leaves=flatten(draft.pieces),ids=leaves.map(p=>p.block),first=leaves[0]?.block;
+ if(draft.request?.trim())return {task:draft.request.trim(),criteria:'Pontosan azt készítse el, amit kértem. A hiányzó adatokat kérdezze meg, ne találja ki. Ha valamit nem tud megcsinálni, jelezze.',attachment:first==='audio'?'A hangfelvételt külön csatold a választott AI-ban.':''};
  if(first==='audio')return {task:'A csatolt rövid hangfelvételt dolgozd fel a lépések szerint. Előbb ellenőrizd, hogy valóban hozzáférsz a hanghoz. Ha nem, állj meg és jelezd.',criteria:'A tartalom egyezzen a felvétellel. Ne találj ki neveket vagy mondatokat. A bizonytalan részeket jelöld.',attachment:'Ehhez saját, rövid hangfelvételt kell csatolnod a választott AI-ban.'};
  if(first==='file')return {task:'Dolgozd fel a következő kitalált próbajegyzetet a lépések szerint: Júlia szeptember 18-ig megírja az oldalszöveget. Márk szeptember 21-ig ellenőrzi a képeket. A költségkeretről még nem döntöttünk.',criteria:'Júlia és Márk neve, feladata és határideje pontos maradjon. A költségkeretet ne találd ki.',attachment:''};
  if(ids.includes('image'))return {task:'Készíts a lépések szerint egy képet: kék bögre fehér asztalon, szöveg és embléma nélkül. Ha nincs képgeneráló eszközöd, mondd meg, és ne állítsd, hogy kép készült.',criteria:'Tényleges kép jelenjen meg. Legyen rajta kék bögre és fehér asztal; ne legyen rajta felirat.',attachment:''};
@@ -39,13 +40,13 @@ export function exampleTask(draft:Draft){
 }
 
 export function instruction(draft:Draft,destination:Destination):string {
- if(!draft.pieces.length||issues(draft.pieces).length)throw Error('Előbb állíts össze egy kapcsolódó lépéssort.');
- if(destination==='local')throw Error('A saját gépes moduláris futtató még nincs bekötve.');
+ if(!draft.pieces.length||issues(draft.pieces).length)throw Error('Előbb válassz feladatokat, és pótold a jelzett hiányzó lépést.');
+ if(destination==='local')throw Error('A gépedre telepíthető segítő még nincs kész.');
  const leaves=flatten(draft.pieces);
  return `AGENT AKADÉMIA – ${draft.title||'Saját összeállítás'}
 Ez egy kézzel átadott munkautasítás a(z) ${destinations[destination].name} beszélgetéséhez. Nem telepítő és nem automatikus alkalmazáskapcsolat.
 
-A később küldött feladatomat az alábbi lépések sorrendjében dolgozd fel. A szükséges, hiányzó adatot kérdezd meg. Ne kérj meglévő szöveget, ha a kérés új tartalom létrehozása, és az ehhez szükséges szempontokat már megadtam.
+A megadott feladatomat az alábbi lépések sorrendjében dolgozd fel. A szükséges, hiányzó adatot kérdezd meg. Ne kérj meglévő szöveget, ha a kérés új tartalom létrehozása, és az ehhez szükséges szempontokat már megadtam.
 
 ${leaves.map((p,i)=>{const b=definition(p),d=delivery(b.id,destination);return `${i+1}. ${b.name}\nFeladat: ${b.description}\nFeltétel: ${d.detail}`;}).join('\n\n')}
 
@@ -58,12 +59,12 @@ MŰKÖDÉSI SZABÁLYOK
 - A végén külön mutasd a tényleges eredményt és egy rövid lépésnaplót: lépés | elkészült / elakadt / kihagyva | hol nézhető meg az eredmény. A napló a te beszámolód, nem független ellenőrzés.
 - Külön sorold fel, mit nem tudtál teljesíteni. Forrás nélküli állítást ne nevezz ellenőrzött ténynek.
 
-Most röviden jelezd, milyen bemenet és eszköz kell, majd várd meg a próbafeladatomat.`;
+A fenti lépések szerint végezd el az üzenetben megadott feladatot. Ha még nem adtam meg a feladatot, kérdezz rá.`;
 }
 
 export const reviewQuestions=[
  {id:'output',label:'Tényleg elkészült, amit kértem?',hint:'Nézd meg a szöveget, nyisd meg a fájlt, képet vagy hangot. Egy „elkészült” üzenet önmagában kevés.'},
- {id:'criteria',label:'Betartotta az előre megadott feltételeket?',hint:'Hasonlítsd össze az eredményt az alábbi elvárt eredménnyel, pontonként.'},
+ {id:'criteria',label:'Olyan lett, amilyet kértem?',hint:'Nézd meg, teljesül-e minden, amit a „Mi fontos neked?” résznél megadtál.'},
  {id:'accuracy',label:'Átnéztem a tartalmát, és nem találtam hibát?',hint:'Neveket, számokat, forrásokat és hiányzó részeket is ellenőrizz. Ha valamiben nem vagy biztos, hagyd ellenőrizetlenül.'}
 ] as const;
 export type Rating='unchecked'|'pass'|'fail';

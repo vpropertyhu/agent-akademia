@@ -115,3 +115,18 @@ A törlés megőrzi a kivett elem helyét az új beillesztéshez. A javaslatok e
 A kivett elem neve mellett Visszateszem és Másik elemet választok gomb jelenik meg. Üres szűrt listából az Összes elem mutatása gomb visszahozza a teljes választékot. Az elemcsere, mozgatás és visszavonás rendes szerkesztési állapotba tér vissza: nem marad aktív a csoportkijelölés, húzás vagy korábbi átadási panel. A hibás kapcsolat továbbra is javításra vár a használat előtt, de a terv szerkeszthető és elmenthető marad.
 
 A scripts/test-module-editing.mjs célzott regressziós ellenőrzése sikeres: a négy gyári minta minden pozíciójából kivett elem visszahelyezése (15 eset), köztes hiányra adott javaslat, szöveggel végződő sor javítása, saját modul újbóli beillesztése és hiányos terv szerkeszthető mentése. Böngészős végigkattintás nem történt.
+
+
+## 12. mentési pont – hétköznapi nyelv és egyben másolható kérés
+
+A 23 feladat neve, példája és leírása hétköznapi nyelvet kapott. A „kérést kap” helyett „Írd le, mit szeretnél”, a technikai bemenet/kimenet helyett „Mi kell hozzá?” és „Mi készül belőle?” jelenik meg. Az eredeti barna–papír–arany arculat és az egyetlen üres gyűjtőmező megmaradt.
+
+Új kérésmező került a gyűjtőmezőbe. A kezdő felhasználó leírhatja, mit készítsen az AI. A Szövegírás, Teendőlista készítése vagy Képkészítés első kiválasztásakor a szükséges kezdő lépés automatikusan bekerül. A kérés megőrződik a böngészős mentésben és a letöltött összeállításban. Az új, opcionális Draft.request mező a korábbi mentésekkel kompatibilis; a módosított kérés új összeállításváltozatnak számít a próba értékelésekor.
+
+A kipróbálás egyetlen másolásra rövidült: a segítő leírása, a saját kérés és az elvárások együtt kerülnek a ChatGPT vagy Claude beszélgetésébe. Külön, számozott útmutatás mondja meg, hol kell beilleszteni és elküldeni, majd hová kell visszatérni az eredménnyel. A részletes eszközigény és az ismételt használat útmutatója igény szerint nyitható meg. A letölthető útmutató és a használati dokumentáció ugyanezt a menetet követi.
+
+Megőriztük a törlés utáni szerkeszthetőséget. A visszavonás nem törli a közben átírt kérést. Az üres összeállítás mellé írt kérés is visszaállítható; a meglévő kérés nem tűnik el a kezdő feladat cseréjekor. Az üzenetíró feladat nem állítja, hogy a piszkozat elkészítéséhez fiók-összekapcsolás kellene.
+
+Ellenőrzés: a TypeScript-fordítás sikeres. A 15 törlés–pótlás eset és a kapcsolódó regressziós ellenőrzések sikeresek. Célzott vizsgálat igazolta a régi mentések olvasását, a kérés mentési körútját és méretkorlátját, a változatkötést, az automatikus kezdő lépést és az egyben átadott kéréshez igazított utasítást. A kiadási build és a közzététel állapotát a külön folyamatos mentés elején rögzítjük.
+
+Ez a módosítás a felület és a kézi kipróbálás egyszerűsítése. Nem készült automatikus moduláris futtató, telepítő, külső AI-megfigyelés vagy új alkalmazáskapcsolat. Böngészős végigkattintás, kezdőkkel végzett használhatósági vizsgálat és valódi külső AI-próba nem történt.

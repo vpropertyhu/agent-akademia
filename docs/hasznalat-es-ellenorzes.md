@@ -1,52 +1,54 @@
-# Az összeállítás használata és ellenőrzése
+# Így próbáld ki a segítődet
 
-## Mit kapsz az építés végén?
+## Kezdd egy feladattal
 
-Az Agent Akadémia az építőmezőben lévő képességeket sorrendbe tett munkautasítássá alakítja. A saját modulok belső lépéseit is kibontja. A fel nem használt saját modulokat nem adja át.
+1. Kattints például a **Szövegírás** feladatra. Bekerül a nagy mezőbe, a szükséges kezdő lépéssel együtt. Húznod nem kell semmit.
+2. A **Mit szeretnél, hogy elkészítsen?** mezőbe írd le a kérésedet. Például: „Írj egy rövid, barátságos bemutatkozást a kézműves vállalkozásomnak. Kerámia bögréket készítek.” Nem kell előre megírnod a bemutatkozást.
+3. Ha szeretnéd, adj hozzá további feladatokat, például **Szöveg átnézése** vagy **Fordítás**. A nagy mezőben látod őket együtt. Ha valami hiányzik a sorrendből, a felület megmutatja, mit kell pótolni.
+4. Kattints a **Mutasd, hogyan próbáljam ki** gombra.
 
-Jelenleg ezt az utasítást kézzel lehet átadni egy ChatGPT- vagy Claude-beszélgetésnek. A feladatot az ott elérhető AI és eszközök végzik. Ez nem automatikusan települő, önállóan futó agent.
+Ha egy meglévő levelet szeretnél összefoglalni, ahhoz az eredeti levél kell. Új szöveg megírásához azt kell elmondanod, miről szóljon és kinek készüljön.
 
-## A használat menete
+## Próbáld ki az AI-ban
 
-1. Tedd az elemeket az építőmezőbe. Ha a sorrend nem kapcsolódik, javítsd az összegzésnél jelzett hiányt.
-2. Kattints az összegzés alatti **Tovább a használathoz** gombra.
-3. Válassz **ChatGPT** vagy **Claude** célt. Nézd meg a kiválasztott képességek eszközigényét.
-4. Az **Utasítás másolása** gomb után nyisd meg a választott AI-t. Indíts új beszélgetést, illeszd az utasítást az üzenetmezőbe, és küldd el.
-5. Másold át a próbafeladatot ugyanabba a beszélgetésbe. Előkészített példát kapsz, de átírhatod. Add meg előre, mitől számít jónak az eredmény.
-6. Ha fájlfeldolgozást kértél, a szükséges valódi fájlt az AI-ban külön csatold. Új szöveg írásához a célt és az elvárásokat kell megadnod, nem egy már megírt szöveget.
-7. A kapott választ hozd vissza az **Eredmény ellenőrzése** lépésbe. Képet vagy fájlt az AI felületén nyiss meg; itt írd le, mit néztél meg és mit tapasztaltál.
-8. Értékeld a három szempontot, majd mentsd vagy töltsd le az ellenőrzést.
+1. Válaszd a **ChatGPT** vagy a **Claude** lehetőséget. Saját fiókoddal használhatod. Ha a feladathoz kép-, hang- vagy fájlkezelés kell, azt külön jelezzük.
+2. Nézd át az **Ezt szeretném** és a **Mi fontos neked?** mezőt. A saját kérésedet áthoztuk; ha nem írtál be semmit, egy átírható példát kapsz.
+3. Kattints a **Szöveg másolása** gombra. A segítőd leírása és a feladatod egyben kerül a vágólapra.
+4. A mellette lévő gombbal nyisd meg a választott AI-t. Kezdj új beszélgetést, illeszd be a szöveget az üzenetmezőbe, és küldd el. Ha saját szöveg, kép vagy felvétel kell hozzá, azt is add meg vagy csatold ugyanott.
+5. Amikor elkészült, gyere vissza ide. Kattints a **Megnézem, jó lett-e** gombra.
 
-## Ha kiveszel egy elemet
+Az AI a másik alkalmazásban dolgozik. A másolás nem telepít programot, és nem kapcsol össze fiókokat. A gépre telepíthető segítő még nincs kész.
 
-Az összeállítás tovább szerkeszthető. A **Visszateszem** gomb azonnal visszaállítja a törlés előtti állapotot. A **Másik elemet választok** gomb a teljes elemtárhoz visz. A Javasolt lista a kivett elem helyéhez ajánl pótlást; az elemtár megnevezi, melyik lépés elé illesztünk.
+## Nézd meg, jó lett-e
 
-Ha a törlés miatt megszakadt a lépések kapcsolata, az összegzés megmutatja a hiányt. Ezt a használat előtt javítani kell, de közben szabadon hozzáadhatsz, kivehetsz és mozgathatsz elemeket. A korábbi próba nem igazolja automatikusan a módosított tervet.
+Másold ide a kapott választ. Ha kép vagy fájl készült, előbb nyisd meg, majd írd le, mit tapasztaltál. Válaszolj a három ellenőrző kérdésre: elkészült-e, amit kértél; olyan lett-e, amilyet kértél; rendben van-e a tartalma.
 
-## Melyik letöltés hová kerül?
+Az **Eredmény mentése** gombbal megőrizheted a tapasztalatodat ezen a böngészőn. A **Korábbi próbáim** résznél visszanézheted. Legfeljebb húsz bejegyzést őrzünk meg.
 
-| Művelet | Mit kapsz? | Hová kerül / mire való? |
-| --- | --- | --- |
-| Utasítás másolása | A kiválasztott lépések teljes munkautasítása | A vágólapra. Te illeszted be az AI üzenetmezőjébe. |
-| Használati útmutató letöltése (.txt) | Menet, utasítás, próbafeladat, ellenőrzőlista | A böngésző által beállított letöltési helyre, vagy a választott mappába. |
-| Építési terv mentése (.json) | Az itteni szerkeszthető összeállítás és saját modulok | Később az Agent Akadémia Terv visszatöltése gombjával nyitható meg. |
-| Ellenőrzés mentése | A próba, eredmény, értékelés, dátum, cél és tervváltozat | Ezen a böngészőn, legfeljebb az utolsó 20 bejegyzés. |
-| Ellenőrzés letöltése | Olvasható értékelési jegyzőkönyv | A böngésző letöltései közé vagy a kiválasztott mappába. |
+A másik AI beszélgetését innen nem látjuk. Az eredményt te hozod vissza, és te értékeled. A korábbi jó eredmény nem jelenti azt, hogy egy megváltoztatott összeállítás vagy egy új feladat is biztosan sikerül.
 
-A letöltés egyik esetben sem telepít agentet és nem kapcsol össze fiókokat. A saját gépes moduláris futtatóhoz még nincs telepítő.
+## Ha változtatnál valamin
 
-## Mit tudunk ellenőrizni?
+Bármelyik feladatot kiveheted vagy áthelyezheted. Törlés után a **Visszateszem** gombbal visszahozhatod, vagy választhatsz helyette másikat. Az összeállítás tovább szerkeszthető marad. Ha a sorrendből hiányzik egy szükséges feladat, azt a kipróbálás előtt pótold.
 
-A műhely a lépések bemeneti és kimeneti típusainak illeszkedését ellenőrzi. Ez nem igazolja, hogy egy külső AI jól oldja meg a feladatot.
+A **Folytatom** gombbal megnyithatod az ebben a böngészőben megőrzött összeállításodat. Másik gépre a letöltött összeállítást viheted át.
 
-Az eredményellenőrzés most **felhasználói értékelés**. A kérdések: tényleg létrejött-e a kért eredmény; betartotta-e a feltételeket; átnézted-e a tartalmat és találtál-e hibát. Részleges ellenőrzés nem kap megfelelt állapotot. Egy jelzett hiba esetén javítás szükséges.
+## Mit jelent a mentés és a letöltés?
 
-A próbanapló mindig az adott összeállításhoz, célhoz és próbafeladathoz kapcsolódik. Módosítás után a korábbi értékelés csak történeti bejegyzés. Egy sikeres próba nem bizonyítja, hogy minden későbbi feladat is sikerülni fog.
+| Gomb | Mire való? |
+| --- | --- |
+| Szöveg másolása | A teljes kérést kimásolja. Te illeszted be a választott AI beszélgetésébe. |
+| Útmutató letöltése | Szövegfájlt kapsz a használat menetével és a teljes bemásolandó szöveggel. |
+| Összeállítás letöltése | Fájlba menti az itt kiválasztott feladatokat és a beírt kérésedet. A **Korábbi összeállítás megnyitása** gombbal töltheted vissza ezen az oldalon. |
+| Eredmény mentése | Ezen a böngészőn megőrzi a próbát, a választ és az értékelésedet. |
+| Eredmény letöltése | Olvasható szövegfájlba teszi ugyanezt, hogy máshol is megőrizhesd. |
 
-Az AI saját lépésnaplója beszámoló, nem független bizonyíték. Automatikus követéshez bekötött futtató, valódi futásazonosító, lépésállapotok, hibák és eredményfájlok szükségesek. Ez a kapcsolat még nincs bekötve.
+A letöltött fájlt a böngésződ letöltései között találod, vagy mentéskor kiválaszthatod a mappáját.
 
-## Eszközök és ismételt használat
+A **Példa megtekintése** előre megírt bemutatót mutat. Saját tartalmat a fenti kipróbálás során, a választott AI-val készíthetsz.
 
-A szöveges képességek utasításként kérhetők. A kép-, hang- és fájlkezeléshez a célban elérhető eszköz kell. A grafikai szerkesztő, mappába mentés és időzítés külön bekötést igényel. A csomag arra utasítja az AI-t, hogy hiányzó eszköznél álljon meg és nevezze meg az akadályt.
+## Ha később is használnád
 
-Az utasítást új beszélgetésbe ismét bemásolhatod, vagy a választott AI projektutasításai között mentheted. A hivatalos útmutatók: [ChatGPT használata](https://learn.chatgpt.com/docs/use-chatgpt), [ChatGPT-projektek](https://learn.chatgpt.com/docs/projects), [Claude-projektek](https://support.claude.com/en/articles/9519177-how-can-i-create-and-manage-projects).
+Új feladathoz ismét bemásolhatod a szöveget egy új beszélgetésbe. A segítő leírása külön is megtekinthető az ismételt használatról szóló részben.
+
+A kép- és hangkészítéshez az AI-nak megfelelő eszközre van szüksége. A mappába mentés, az időzítés és más programok használata további beállítást igényel; ezeket a másolás nem végzi el. Hiányzó eszköznél a bemásolt leírás arra kéri az AI-t, hogy jelezze az akadályt.
