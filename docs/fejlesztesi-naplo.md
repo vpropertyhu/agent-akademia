@@ -71,3 +71,23 @@ Ellenőrzés: a TypeScript-fordítás és a célzott logikai vizsgálatok sikere
 A bemutató továbbra is előre megírt mintát használ. A valódi AI-futtatás nem része ennek a felületegyszerűsítésnek.
 
 A negyedik mentési pont ellenőrzésekor két további javítás készült: a régi, több köztes lépést hiányoló terveknél a felület egyben felajánlja a szükséges átalakítási sort; a húzás előjelzése és az áthelyezés elfogadása a teljes módosított sorra ugyanazt a szabályt használja. Célzott ellenőrzés igazolta a kérés → írás → dokumentum → mentés javítást is.
+
+## 6. mentési pont – egyetlen üres építőmező
+
+A felhasználó új döntése: egy darab, egyértelműen kijelölt üres mezőbe kerüljenek az elemek, és ott jelenjen meg az összeállítás összegzése. Az előző vezetett, lépésenkénti választó helyét ez az egymezős munkafelület veszi át.
+
+Megvalósítás:
+
+- Az elemtár mindig látható; minden elem húzással és kattintással is hozzáadható.
+- Egyetlen nagy, szaggatott szélű fogadómező látszik „Ide tedd az elemeket” felirattal. A teljes terület fogadja az elemeket és húzáskor kiemelkedik.
+- A mezőbe tett elemek kártyákként, együtt jelennek meg. A mezőn belül átrendezhetők és egyenként kivehetők.
+- Ugyanazon a kereten belül jelenik meg az „Ezt raktad össze” összegzés: elemek száma, belső lépések száma és a választott képességek.
+- Egy hiányosan összekapcsolt elem is bekerülhet. Ha van megfelelő helye, a felület oda rendezi; egyébként az összegzés megmutatja a hiányzó kapcsolatot és az elérhető javítási javaslatot.
+- A saját modulok belső lépései is beleszámítanak az összegzésbe; ez nem a mintafuttatás eredménye.
+- A részletes elemnézet és a bemutató alapból zárva marad, külön kérésre nyílik meg.
+- Üres induláskor a felület nem írja felül a korábbi mentést. A régi terv a „Visszatöltöm” gombbal megnyitható; módosítás előtt külön helyi példány is megőrződik.
+- A belső leejtési esemény nem jut tovább a teljes mezőhöz, így egy leejtés csak egy beszúrást okoz.
+
+Ellenőrzés: a TypeScript és a célzott logikai vizsgálatok sikeresek az üres indulásra, az elemek elhelyezésére, a hiányos összeállítás megtartására, a régi JSON-mentésre és a saját modul belső lépésszámára. A webes kiadási build következik. Böngészős végigkattintás nem történt.
+
+A mentésmegőrzés az üres mezővel, de saját modulokkal vagy egyedi névvel rendelkező tervekre is kiterjed. A leejtés egyszeri feldolgozását és a belső lépések számolását külön forrásellenőrzés is megerősítette.

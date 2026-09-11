@@ -41,7 +41,7 @@ export const recipes = [
 ];
 export const uid = () => globalThis.crypto?.randomUUID?.() || `p-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 export const makePieces = (ids: string[]): Piece[] => ids.map(block=>({uid:uid(),block}));
-export const initialDraft = (): Draft => ({version:1,title:'Az én agentem',pieces:[{uid:'first-0',block:'request'}],modules:[]});
+export const initialDraft = (): Draft => ({version:1,title:'Az én agentem',pieces:[],modules:[]});
 export function definition(piece: Piece): Block {
  if (piece.children?.length) {
   const first=definition(piece.children[0]), last=definition(piece.children[piece.children.length-1]);
@@ -148,4 +148,12 @@ export function repairSteps(pieces: Piece[], index:number):string[] {
   }
  }
  return [];
+}
+
+/** Prefer a compatible place, but keep unfinished selections visible in the field. */
+export function placementIndex(pieces:Piece[],candidate:Piece,preferred=pieces.length):number {
+ const bounded=Math.max(0,Math.min(preferred,pieces.length));
+ if(insertionConnection(pieces,bounded,candidate).ok)return bounded;
+ for(let i=0;i<=pieces.length;i++)if(insertionConnection(pieces,i,candidate).ok)return i;
+ return bounded;
 }
