@@ -3,17 +3,20 @@ import { getChatGPTUser } from '@/app/chatgpt-auth';
 import { getDB } from '@/lib/workspace-db';
 import { getAIConfig } from '@/lib/ai-config';
 import { AIError, createAIWork, validateAIInput, aiJobs, type AITurn } from '@/lib/ai-agent';
+import {storeWorkImage} from '@/lib/work-images';
+import {createResearchWork} from '@/lib/research-agent';
 export const dynamic='force-dynamic';
 const reply=(body:unknown,status=200)=>Response.json(body,{status,headers:{'Cache-Control':'no-store'}});
 type Row={id:string;user_id:string;parent_id:string|null;job:string;brief:string;profile:string;history_json:string;request_hash:string;status:string;result_json:string|null;error:string|null;model:string;tokens:number;created_at:string;updated_at:string};
-function decode(row:Row){const stale=row.status==='pending'&&Date.now()-Date.parse(row.updated_at)>150000;return {id:row.id,parentId:row.parent_id,job:row.job,brief:row.brief,status:stale?'failed':row.status,result:row.result_json?JSON.parse(row.result_json):null,error:stale?'A futás megszakadt. Nem indítjuk újra automatikusan.':row.error,createdAt:row.created_at};}
+function decode(row:Row){const stored=row.result_json?JSON.parse(row.result_json):null;const stale=row.status==='pending'&&Date.now()-Date.parse(row.updated_at)>480000;return {id:row.id,parentId:row.parent_id,job:row.job,brief:row.brief,status:stale?'failed':row.status,result:stored?.title?{...stored,imagePath:undefined,...(stored.imagePath?{imageURL:'/api/ai-image?id='+row.id}:{})}:null,steps:stored?.steps||stored?.progress||[],error:stale?'A futás megszakadt. Nem indítjuk újra automatikusan.':row.error,createdAt:row.created_at};}
 async function readBody(request:Request){const reader=request.body?.getReader();if(!reader)throw new AIError('BODY','Hiányzik a kérés.');let size=0;const chunks:Uint8Array[]=[];while(true){const {value,done}=await reader.read();if(done)break;size+=value.length;if(size>80000){await reader.cancel();throw new AIError('BODY','A kérés túl hosszú.',413);}chunks.push(value);}const all=new Uint8Array(size);let p=0;for(const c of chunks){all.set(c,p);p+=c.length;}try{return JSON.parse(new TextDecoder().decode(all)) as unknown;}catch{throw new AIError('BODY','A kérés nem olvasható.');}}
 export async function GET(request:Request){
+ if(new URL(request.url).searchParams.get('capabilities')==='research')return reply({configured:!!getAIConfig().apiKey});
  const user=await getChatGPTUser();if(!user)return reply({error:'A saját agented használatához jelentkezz be.'},401);
  try{const db=getDB(),id=new URL(request.url).searchParams.get('id');if(id){if(!z.string().uuid().safeParse(id).success)return reply({error:'Érvénytelen munkaazonosító.'},400);const row=await db.prepare('SELECT * FROM ai_works WHERE id=? AND user_id=?').bind(id,user.userId).first<Row>();return row?reply({work:decode(row)}):reply({error:'Ez a munka nem található.'},404);}
  const profile=await db.prepare('SELECT content,revision FROM ai_profiles WHERE user_id=?').bind(user.userId).first<{content:string;revision:number}>();
  const works=await db.prepare('SELECT * FROM ai_works WHERE user_id=? ORDER BY created_at DESC LIMIT 30').bind(user.userId).all<Row>();
- return reply({configured:!!getAIConfig().apiKey,profile:profile?.content||'',revision:profile?.revision??null,works:works.results.map(decode)});
+ return reply({configured:!!getAIConfig().apiKey,profile:profile?.content||'',revision:profile?.revision??null,works:works.results.map(row=>{const w=decode(row);return row.job==='kutato'&&w.result?{...w,result:{...w.result,image:undefined,research:undefined,documents:[]}}:w;})});
  }catch{return reply({error:'A munkatér most nem tölthető be. Próbáld újra.'},503);}
 }
 const profileSchema=z.object({action:z.literal('profile'),content:z.string().max(12000),revision:z.number().int().positive().nullable()}).strict();
@@ -35,7 +38,7 @@ export async function POST(request:Request){
   if(p.parentId){const parent=await db.prepare('SELECT * FROM ai_works WHERE id=? AND user_id=?').bind(p.parentId,user.userId).first<Row>();if(!parent||parent.status!=='succeeded'||!parent.result_json)return reply({error:'Az előző munka nem található, vagy még nem készült el.'},404);if(parent.job!==p.job)return reply({error:'A javítás az előző feladatfajtát folytatja.'},400);history=[...JSON.parse(parent.history_json),{brief:parent.brief,result:JSON.parse(parent.result_json)}];}
   const background=await db.prepare('SELECT content FROM ai_profiles WHERE user_id=?').bind(user.userId).first<{content:string}>();
   const input=validateAIInput({job:p.job,brief:p.brief,profile:background?.content||'',history});
-  const now=new Date().toISOString(),dayAgo=new Date(Date.now()-86400000).toISOString(),activeSince=new Date(Date.now()-150000).toISOString();
+  const now=new Date().toISOString(),dayAgo=new Date(Date.now()-86400000).toISOString(),activeSince=new Date(Date.now()-480000).toISOString();
   // One atomic admission: at most 20 attempts/user and 200/site in any 24 h, including failures.
   const admitted=await db.prepare(`INSERT INTO ai_works (id,user_id,parent_id,job,brief,profile,history_json,request_hash,status,model,created_at,updated_at)
    SELECT ?,?,?,?,?,?,?,?,'pending',?,?,?
@@ -45,8 +48,8 @@ export async function POST(request:Request){
    ON CONFLICT(id) DO NOTHING`).bind(p.id,user.userId,p.parentId,p.job,input.brief,input.profile,JSON.stringify(history),hash,config.model||'',now,now,user.userId,dayAgo,dayAgo,user.userId,activeSince).run();
   if(!admitted.meta.changes)return reply({error:'Már fut egy feladat, vagy elfogyott a napi keret. Egy fiókkal 24 óránként legfeljebb 20 kérés indítható.'},429);
   workId=p.id;
-  const generated=await createAIWork(input,config);
-  const saved=await db.prepare("UPDATE ai_works SET status='succeeded',result_json=?,tokens=?,updated_at=? WHERE id=? AND user_id=? AND status='pending'").bind(JSON.stringify(generated.result),generated.tokens,new Date().toISOString(),p.id,user.userId).run();
+  const generated=input.job==='kutato'?await createResearchWork(input,config,fetch,async progress=>{const changed=await db.prepare("UPDATE ai_works SET result_json=?,updated_at=? WHERE id=? AND user_id=? AND status='pending'").bind(JSON.stringify(progress.partial?await storeWorkImage(user.userId,p.id,progress.partial):{progress:progress.steps}),new Date().toISOString(),p.id,user.userId).run();if(!changed.meta.changes)throw new AIError('SAVE','A munka állapota nem menthető.',503);}):await createAIWork(input,config);
+  const saved=await db.prepare("UPDATE ai_works SET status='succeeded',result_json=?,tokens=?,updated_at=? WHERE id=? AND user_id=? AND status='pending'").bind(JSON.stringify(await storeWorkImage(user.userId,p.id,generated.result)),generated.tokens,new Date().toISOString(),p.id,user.userId).run();
   if(!saved.meta.changes)throw new AIError('SAVE','A válasz nem menthető. A korábbi munkád megmaradt.',503);
   const row=await db.prepare('SELECT * FROM ai_works WHERE id=? AND user_id=?').bind(p.id,user.userId).first<Row>();if(!row)throw new AIError('SAVE','A mentett válasz nem tölthető be.',503);
   return reply({work:decode(row)},201);

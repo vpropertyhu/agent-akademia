@@ -2,6 +2,7 @@ import type {Context} from '@netlify/functions';
 import {appStore,boundedBody,backendURL} from '../../deploy/shared/netlify';
 import {runWork,uuid} from '../../deploy/shared/workflow';
 import {sign,verify} from '../../deploy/shared/signing';
+import {createResearchWork} from '../../lib/research-agent';
 import {AIError,validateAIResult} from '../../lib/ai-agent';
 export default async function(request:Request,context:Context){
  try{
@@ -9,7 +10,8 @@ export default async function(request:Request,context:Context){
   if(!verify(body,secret,'dispatch',request.headers.get('X-Agent-Time'),request.headers.get('X-Agent-Signature'),300000))return;
   const raw=JSON.parse(body) as {id:unknown;owner:unknown};if(!uuid(raw.id)||typeof raw.owner!=='string'||!/^[0-9a-f]{64}$/.test(raw.owner))return;
   const store=appStore(context),api=backendURL(Netlify.env.get('AGENT_API_URL'));
-  await runWork(store,raw.owner,raw.id,async input=>{
+  await runWork(store,raw.owner,raw.id,async (input,report)=>{
+   if(input.job==='kutato'){const generated=await createResearchWork(input,{apiKey:Netlify.env.get('OPENAI_API_KEY'),baseURL:Netlify.env.get('OPENAI_BASE_URL'),model:Netlify.env.get('OPENAI_MODEL')},fetch,p=>report(p.steps,p.partial));return generated.result;}
    if(!api)throw new AIError('NOT_CONFIGURED','A háttérszolgáltatás még nincs csatlakoztatva.',503);
    const payload=JSON.stringify(input),signed=sign(payload,secret,'generate');let response:Response;
    try{response=await fetch(api+'/generate',{method:'POST',headers:{'Content-Type':'application/json','X-Agent-Time':signed.at,'X-Agent-Signature':signed.signature,'X-Agent-Job':raw.id as string},body:payload,signal:AbortSignal.timeout(145000)});}catch{throw new AIError('CONNECTION','Az AI-kapcsolat megszakadt. Nem indítjuk újra automatikusan.',504);}

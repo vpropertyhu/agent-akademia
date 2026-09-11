@@ -5,6 +5,7 @@ import ts from 'typescript';
 const root=path.resolve('.sites-runtime/portable-tests');fs.mkdirSync(root,{recursive:true});
 const compile=file=>ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;
 fs.writeFileSync(root+'/engine.mjs',compile('lib/ai-agent.ts'));
+fs.writeFileSync(root+'/research.mjs',compile('lib/research-agent.ts').replaceAll('./ai-agent','./engine.mjs'));
 fs.writeFileSync(root+'/workflow.mjs',compile('deploy/shared/workflow.ts').replaceAll('../../lib/ai-agent','./engine.mjs'));
 fs.writeFileSync(root+'/signing.mjs',compile('deploy/shared/signing.ts'));
 const {prepareWork,runWork,readWorkspace,saveProfile,userKey,visible}=await import(root+'/workflow.mjs');
@@ -29,7 +30,7 @@ try{const url='http://127.0.0.1:'+server.address().port;assert.equal((await fetc
 }finally{await new Promise(resolve=>server.close(resolve));}
 // Exercise the actual Netlify handlers with storage and Identity boundaries stubbed.
 fs.writeFileSync(root+'/netlify.mjs',compile('deploy/shared/netlify.ts').replace("import { getStore, getDeployStore } from '@netlify/blobs';", "const getStore=()=>globalThis.__portableTest.production,getDeployStore=()=>globalThis.__portableTest.preview;").replaceAll('../../lib/ai-agent','./engine.mjs'));
-for(const name of ['ai','ai-worker-background'])fs.writeFileSync(root+'/'+name+'.mjs',compile('netlify/functions/'+name+'.mts').replace("import { getUser } from '@netlify/identity';", "const getUser=async()=>globalThis.__portableTest.user;").replaceAll('../../lib/ai-agent','./engine.mjs').replaceAll('../../deploy/shared/netlify','./netlify.mjs').replaceAll('../../deploy/shared/workflow','./workflow.mjs').replaceAll('../../deploy/shared/signing','./signing.mjs'));
+for(const name of ['ai','ai-worker-background'])fs.writeFileSync(root+'/'+name+'.mjs',compile('netlify/functions/'+name+'.mts').replace("import { getUser } from '@netlify/identity';", "const getUser=async()=>globalThis.__portableTest.user;").replaceAll('../../lib/ai-agent','./engine.mjs').replaceAll('../../lib/research-agent','./research.mjs').replaceAll('../../deploy/shared/netlify','./netlify.mjs').replaceAll('../../deploy/shared/workflow','./workflow.mjs').replaceAll('../../deploy/shared/signing','./signing.mjs'));
 const {default:apiHandler}=await import(root+'/ai.mjs'),{default:workerHandler}=await import(root+'/ai-worker-background.mjs');
 const originalFetch=globalThis.fetch,originalNetlify=globalThis.Netlify;
 const production=new MemoryStore(),preview=new MemoryStore();globalThis.__portableTest={user:null,production,preview};
@@ -49,6 +50,13 @@ try{
  globalThis.__portableTest.user={id:'beta'};assert.equal((await apiHandler(new Request(url+'/api/ai?id='+submitted.id),context)).status,404);
  globalThis.__portableTest.user={id:'alpha'};assert.equal((await apiHandler(new Request(url+'/api/ai?id='+submitted.id),{deploy:{context:'deploy-preview'}})).status,404);
  assert.equal((await apiHandler(request({action:'create',...raw()}),'bad-context')).status,503);
+ // The new research path uses the configured gateway, not the legacy Render transport.
+ env.OPENAI_API_KEY='gateway-test-key';env.OPENAI_BASE_URL='https://gateway.test/openai';
+ const search=()=>Response.json({status:'completed',output:[{type:'web_search_call',status:'completed'},{type:'message',content:[{type:'output_text',text:'Test research',annotations:[{type:'url_citation',url:'https://example.com/source',title:'Source'}]}]}]});
+ let gatewayCalls=0;globalThis.fetch=async(target,options={})=>{const address=String(target);if(address===url+'/.netlify/functions/ai-worker-background'){queue={target,options};return new Response(null,{status:202});}if(address.startsWith('https://gateway.test/openai/v1/')){gatewayCalls++;const b=JSON.parse(options.body);if(b.tools)return search();if(address.endsWith('images/generations'))return Response.json({data:[{b64_json:'/9j/QUJDRA=='}]});return Response.json({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(result)}]}]});}throw new Error('Unexpected research request '+address);};
+ const researchJob={action:'create',...raw(),job:'kutato'};assert.equal((await apiHandler(request(researchJob),context)).status,202);await workerHandler(new Request(String(queue.target),{method:'POST',...queue.options}),context);assert.equal(gatewayCalls,4);const researchDone=await(await apiHandler(new Request(url+'/api/ai?id='+researchJob.id),context)).json();assert.equal(researchDone.work.status,'succeeded');assert(researchDone.work.result.image);assert.equal(researchDone.work.steps.length,4);
+ globalThis.__portableTest.user=null;const capability=await(await apiHandler(new Request(url+'/api/ai?capabilities=research'),context)).json();assert.deepEqual(capability,{configured:true});assert.equal((await apiHandler(new Request(url+'/api/ai?id='+researchJob.id),context)).status,401);
+
 }finally{globalThis.fetch=originalFetch;globalThis.Netlify=originalNetlify;delete globalThis.__portableTest;}
 console.log('PASS: production/preview separation; actual Netlify handlers reject unauthenticated and cross-origin requests, scope saved work, dispatch signed background jobs, and poll without additional model calls. Identity and Blobs mocked.');
 console.log('PASS: conditional Blob writes, isolated user context, profile conflict, atomic quota/admission, single worker claim, history and failure preservation; actual Render HTTP server, HMAC scope/tamper/expiry/replay checks and two generation stages. Blobs and OpenAI mocked.');

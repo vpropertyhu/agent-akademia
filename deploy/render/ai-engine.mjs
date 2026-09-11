@@ -1,6 +1,7 @@
 /** Shared, dependency-free AI engine for the Site and the local Node application. */
 export const AI_MODEL = 'gpt-5-mini';
 export const aiJobs = [
+    { id: 'kutato', name: 'Témából kész anyag', example: 'Készíts kezdőknek rövid útmutatót az erkélyen nevelhető fűszernövényekről.', instruction: 'A kutatási jegyzetek alapján készíts közérthető cikket és rövid posztot.' },
     { id: 'kampany', name: 'Kampányt készítek', example: 'Készíts egyhetes kampányt egy új, kezdőknek szóló agentépítő tanfolyamhoz.', instruction: 'Készíts egy összefüggő, megvalósítható kampányt: rövid koncepció és ütemezés, három különböző kész poszt, egy teljes email tárgysorral. Konkrét ajánlatot, árat vagy eredményígéretet ne találj ki.' },
     { id: 'hirdetes', name: 'Hirdetést írok', example: 'Írj érdeklődést keltő hirdetést az ingatlanomhoz. A biztos tények: Budapest, 62 m², két szoba, erkély.', instruction: 'Alkoss három eltérő címet, egy teljes hirdetést és egy rövid változatot. Kizárólag megadott termék- vagy ingatlanjellemzőkből dolgozz; a meg nem adott árat, lokációt és előnyöket ne találd ki.' },
     { id: 'ertekesites', name: 'Ügyfelet szerzek', example: 'Készíts bemutatkozó megkeresést kisvállalkozóknak az agentbeállítási szolgáltatásomhoz.', instruction: 'Készíts háromlépéses megkeresési sorozatot: bemutatkozó üzenet, hasznos utánkövetés, udvarias lezárás. Mindegyikhez kész szöveget adj. Ne állíts személyes ismeretséget, ügyféleredményt vagy korábbi kapcsolatot bizonyíték nélkül.' },
@@ -19,18 +20,44 @@ export class AIError extends Error {
 }
 const object = (x) => !!x && typeof x === 'object' && !Array.isArray(x);
 function bounded(value, max, min = 0) { return typeof value === 'string' && value.trim().length >= min && value.length <= max; }
+export function safeSourceURL(raw) { try {
+    const u = new URL(raw);
+    return ['http:', 'https:'].includes(u.protocol) && !u.username && !u.password;
+}
+catch {
+    return false;
+} }
 export function validateAIResult(value) {
     if (!object(value) || !bounded(value.title, 160, 1) || !bounded(value.summary, 1500) || !Array.isArray(value.documents) || value.documents.length > 8 || !Array.isArray(value.questions) || value.questions.length > 3 || !Array.isArray(value.notes) || value.notes.length > 8)
         throw new AIError('INVALID_OUTPUT', 'Az AI válasza nem volt teljes. Kérj új változatot.', 502);
-    if (!value.documents.every(d => object(d) && bounded(d.title, 160, 1) && bounded(d.body, 12000, 1)) || !value.questions.every(q => bounded(q, 600, 1)) || !value.notes.every(n => bounded(n, 800, 1)) || (!value.documents.length && !value.questions.length) || JSON.stringify(value).length > 40000)
+    const plain = { title: value.title, summary: value.summary, documents: value.documents, questions: value.questions, notes: value.notes };
+    if (!value.documents.every(d => object(d) && bounded(d.title, 160, 1) && bounded(d.body, 12000, 1)) || !value.questions.every(q => bounded(q, 600, 1)) || !value.notes.every(n => bounded(n, 800, 1)) || (!value.documents.length && !value.questions.length) || JSON.stringify(plain).length > 40000)
         throw new AIError('INVALID_OUTPUT', 'Az AI válasza nem volt teljes. Kérj új változatot.', 502);
-    return { title: value.title, summary: value.summary, documents: value.documents, questions: value.questions, notes: value.notes };
+    const result = { title: value.title, summary: value.summary, documents: value.documents, questions: value.questions, notes: value.notes };
+    if (value.research !== undefined) {
+        const r = value.research;
+        if (!object(r) || !bounded(r.text, 18000, 1) || !Array.isArray(r.sources) || r.sources.length < 1 || r.sources.length > 12 || !r.sources.every(s => object(s) && bounded(s.title, 300, 1) && bounded(s.url, 2000, 1) && safeSourceURL(s.url)))
+            throw new AIError('INVALID_OUTPUT', 'A kutatás forrásai nem olvashatók.', 502);
+        result.research = r;
+    }
+    if (value.image !== undefined) {
+        const i = value.image;
+        if (!object(i) || i.mime !== 'image/jpeg' || typeof i.data !== 'string' || i.data.length > 900000 || !/^\/9j\/[A-Za-z0-9+/=]+$/.test(i.data))
+            throw new AIError('INVALID_OUTPUT', 'A kép nem menthető.', 502);
+        result.image = i;
+    }
+    if (value.steps !== undefined) {
+        if (!Array.isArray(value.steps) || value.steps.length > 5 || !value.steps.every(s => object(s) && ['research', 'write', 'review', 'image'].includes(String(s.id)) && ['running', 'completed', 'failed'].includes(String(s.status)) && typeof s.at === 'string' && Number.isFinite(Date.parse(s.at))))
+            throw new AIError('INVALID_OUTPUT', 'A lépések nem olvashatók.', 502);
+        result.steps = value.steps;
+    }
+    return result;
 }
 export function validateAIInput(raw) {
     if (!object(raw) || !aiJobs.some(j => j.id === raw.job) || !bounded(raw.brief, 6000, 3) || !bounded(raw.profile, 12000) || !Array.isArray(raw.history) || raw.history.length > 6)
         throw new AIError('INVALID_INPUT', 'Írd le néhány szóban a feladatot. Egy kérés legfeljebb 6000 karakter lehet.');
     const history = raw.history.map(h => { if (!object(h) || !bounded(h.brief, 6000, 3))
-        throw new AIError('INVALID_HISTORY', 'A korábbi munka nem olvasható.'); return { brief: h.brief, result: validateAIResult(h.result) }; });
+        throw new AIError('INVALID_HISTORY', 'A korábbi munka nem olvasható.'); return { brief: h.brief, result: (() => { const { research, image, imageURL, steps, ...plain } = validateAIResult(h.result); return plain; })() }; });
     if (JSON.stringify(history).length > 140000)
         throw new AIError('CONTEXT_LIMIT', 'Ez a munka már hosszú. Indíts új munkát a fontos tudnivalókkal.');
     return { job: raw.job, brief: raw.brief.trim(), profile: raw.profile.trim(), history };
@@ -90,6 +117,8 @@ export async function createAIWork(raw, config, fetcher = fetch) {
     const input = validateAIInput(raw);
     if (!config.apiKey?.trim())
         throw new AIError('NOT_CONFIGURED', 'Az AI-kapcsolat még nincs beállítva. A működtetőnek egyszer csatlakoztatnia kell az AI-szolgáltatást.', 503);
+    if (input.job === 'kutato')
+        throw new AIError('WORKFLOW', 'Ezt a segítőt a Témából kész anyag oldalon indítsd el.', 400);
     const first = await modelCall(input, config, null, fetcher);
     if (first.result.questions.length && !first.result.documents.length)
         return { ...first, calls: 1, model: config.model || AI_MODEL };

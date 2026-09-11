@@ -130,3 +130,20 @@ Megőriztük a törlés utáni szerkeszthetőséget. A visszavonás nem törli a
 Ellenőrzés: a TypeScript-fordítás sikeres. A 15 törlés–pótlás eset és a kapcsolódó regressziós ellenőrzések sikeresek. Célzott vizsgálat igazolta a régi mentések olvasását, a kérés mentési körútját és méretkorlátját, a változatkötést, az automatikus kezdő lépést és az egyben átadott kéréshez igazított utasítást. A kiadási build és a közzététel állapotát a külön folyamatos mentés elején rögzítjük.
 
 Ez a módosítás a felület és a kézi kipróbálás egyszerűsítése. Nem készült automatikus moduláris futtató, telepítő, külső AI-megfigyelés vagy új alkalmazáskapcsolat. Böngészős végigkattintás, kezdőkkel végzett használhatósági vizsgálat és valódi külső AI-próba nem történt.
+
+
+## 14. mentési pont – témából kész anyag, valódi végrehajtási útvonallal
+
+Új, /proba címen elérhető munkafelület készült. Egyetlen feladatból internetes kutatást, cikket, rövid posztot, szerkesztői ellenőrzést és egy JPEG-illusztrációt készít, majd az eredményt a fiókhoz menti. Az építő a kezdőlapon megmaradt; egy kiemelt gomb visz a próbához. Az eredeti arculat megmaradt.
+
+A keresés, írás, ellenőrzés és képkészítés négy tényleges szolgáltatói művelet. A webes források a keresési válasz hivatkozásaiból kerülnek a munkához, nem kitalált URL-ekből. A lépések állapota csak tényleges kezdéskor és befejezéskor változik, és mentésre kerül. A képhiba után a már elkészült szöveg hozzáférhető marad. Nincs automatikus fizetős újrapróbálás. Pontosító kérdésnél a következő műveletek nem indulnak el.
+
+A Netlify-változat az új feladatot közvetlenül a háttérfüggvényben futtatja, az OPENAI_API_KEY és OPENAI_BASE_URL értékekkel, a Netlify AI Gateway támogatásával. A korábbi szövegalkotó továbbra is a Render háttérszolgáltatását használja. Ehhez az új útvonalhoz nem szükséges Render-kiadás. A Sites-változat ugyanazt a kutató motort használja a meglévő fiókhoz kötött adatbázisával, a képfájlokhoz R2-tárolóval; a vizsgálatkor a privát Site AI-hozzáférése még nem volt beállítva.
+
+A hosszabb futások 8 perces határon belül követhetők. A tárolási zárolás kezeli a közben mentett előrehaladást. A listanézet nem tölti le az összes korábbi képet; egy munka megnyitása külön kéri le a teljes eredményt. Folytatáskor a keresés megkapja az eredeti témát is. A korábbi szövegalkotó és a helyi csomag választója nem kínálja a külön kutató útvonalat.
+
+Belépés nélkül egy egyértelműen előre elkészített példa nézhető meg cikkel, poszttal, képpel és hivatkozással. A kép valódi, ehhez a bemutatóhoz generált illusztráció. A példa nem állítja, hogy az alkalmazásban frissen lefutott munka lenne. A saját feladat indítása valós AI-hozzáférést igényel; hiány esetén a felület ezt még belépés előtt jelzi.
+
+Célzott ellenőrzések: kutatási bizonyíték, forrás- és képvalidáció, négy egymásra épülő hívás, pontosító ág, eredeti témát megtartó folytatás, részleges eredmény megőrzése, idempotencia, jogosultságelválasztás, Netlify háttérindítás és a közben mentett állapot utáni végső mentés. A tesztekben a szolgáltatói válaszok helyettesítve vannak; éles AI-minőségi próba nem történt. A tényleges kiadási és hozzáférési állapot a folyamatos mentés elején szerepel.
+
+A kiadás előtti felülvizsgálat két további javítást hozott: a nyilvános belépés megtartja a már beírt témát és hátteret; hálózati hiba után a visszaigazoltan hiányzó munka nem tartja végleg zárolva a kezelőfelületet. Az indítás azonosítóját az állapotfrissítéstől függetlenül őrizzük.
