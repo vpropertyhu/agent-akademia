@@ -47,4 +47,5 @@ next-env.d.ts
 /work/
 /.netlify/
 /dist-netlify/
+/dist-soon/
 /release/
