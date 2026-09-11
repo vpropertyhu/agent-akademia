@@ -2,7 +2,8 @@
 
 A felhasználó kérése 2026-09-11-én: a www.agentakademia.hu címen csak `soon...` legyen nyilvános, a teljes alkalmazás maradjon privát.
 
-- A Netlify kiadás a `scripts/build-coming-soon.mjs` paranccsal készül, a `dist-soon` mappából.
+- A külön nyilvános Netlify projekt neve `agent-akademia-soon`, címe https://agent-akademia-soon.netlify.app. A kiadás a `scripts/build-coming-soon.mjs` paranccsal készül, a `dist-soon` mappából.
+- A korábbi `agentakademia` Netlify projekt összes kiadásán bekapcsoltuk a Netlify csapattagsághoz kötött belépést. Az ellenőrzött Personal csapatban egyetlen tag volt, a tulajdonos. A nyilvános soon projekt külön projekt, ezt a védelem nem érinti.
 - A nyilvános oldalon egyetlen felirat szerepel: `soon...`. Az eredeti Fraunces betű és barna–arany arculat megmarad.
 - A kiadás nem tartalmazza az alkalmazás JavaScriptjét, letölthető agentcsomagjait, példáit vagy AI-függvényeit. A korábbi alkalmazásútvonalak is a nyitóoldalt adják vissza.
 - A teljes fejlesztési forrás megmarad. A privát alkalmazás: https://agent-akademia.vproperty-hu.chatgpt.site — a hozzáférés ellenőrzésekor csak a tulajdonos szerepelt az engedélyezettek között, külső látogató nélkül.
@@ -18,7 +19,7 @@ A felhasználó kérése 2026-09-11-én: a www.agentakademia.hu címen csak `soo
 | www.agentakademia.hu | CNAME | agentakademia.hu |
 | névszerverek | NS | ns1.tarhelykozpont.hu, ns2.tarhelykozpont.hu |
 
-A www címet hozzá kell rendelni a meglévő `agentakademia` Netlify projekthez, majd a `www` CNAME rekord értékét `agentakademia.netlify.app` értékre kell állítani a DNS-szolgáltatónál. A levelezési rekordokat meg kell őrizni. A domain bekötése csak a DNS és a HTTPS tényleges ellenőrzése után tekinthető késznek.
+A www címet hozzá kell rendelni az `agent-akademia-soon` Netlify projekthez, majd a `www` CNAME rekord értékét `agent-akademia-soon.netlify.app` értékre kell állítani a DNS-szolgáltatónál. A levelezési rekordokat meg kell őrizni. A domain hozzárendelése és DNS-módosítása még nem történt meg: a kapcsolt Netlify eszköz nem tartalmaz domainkezelő műveletet, és a külső DNS-kezelőhöz sincs kapcsolt hozzáférés. A domain bekötése csak a DNS és a HTTPS tényleges ellenőrzése után tekinthető késznek.
 
 ## Az AI-próba állapota
 
