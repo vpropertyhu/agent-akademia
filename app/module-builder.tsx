@@ -6,6 +6,7 @@ import {Pawn} from '../components/pawn';
 import {Textarea} from '../components/ui/textarea';
 import AgentHandoff from './agent-handoff';
 import {planKey} from '../lib/agent-handoff';
+import {builderToPilot} from '../lib/pilot-plan';
 import {blocks,clonePieces,connection,definition,editingIndex,families,flatten,groupPieces,initialDraft,insertionConnection,issues,kinds,makePieces,parseDraft,placementIndex,recipes,repairSteps,stepLabels,suggestedBlocks,uid,type Block,type Draft,type Family,type Piece} from '../lib/module-builder';
 
 const iconMap:Record<string,typeof Layers3>={spark:Sparkles,audio:AudioLines,file:FileText,clock:Clock,scan:ScanText,align:AlignLeft,table:Table2,pen:PenLine,list:ListChecks,languages:Languages,image:ImageIcon,volume:Volume2,shield:ShieldCheck,hand:Hand,chart:ChartNoAxesCombined,layout:LayoutTemplate,folder:FolderOutput,send:Send,box:Layers3};
@@ -102,6 +103,7 @@ export default function ModuleBuilder(){
  function revealTrial(){preview();window.requestAnimationFrame(()=>trialRef.current?.scrollIntoView({block:'nearest',behavior:motion()}));}
  function download(){const blob=new Blob([JSON.stringify(draft,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),anchor=document.createElement('a');anchor.href=url;anchor.download='agent-akademia-epitesi-terv.json';anchor.click();window.setTimeout(()=>URL.revokeObjectURL(url),5000);setNotice('A böngésződ a beállított letöltési helyre menti a tervet, vagy mappát kérdez. A letöltött összeállítást később itt nyithatod meg. Nem telepít programot az AI-ba.');}
  function openHandoff(){setHandoffOpen(true);setDetailsOpen(false);setPlaying(false);window.requestAnimationFrame(()=>document.getElementById('agent-handoff')?.scrollIntoView({block:'start',behavior:motion()}));}
+ function runHere(){try{const plan=builderToPilot(draft);sessionStorage.setItem('aa-pilot-plan',JSON.stringify(plan));window.location.assign('/proba');}catch(e){setNotice((e as Error).message);}}
  async function importFile(file:File|undefined){if(!file)return;try{if(file.size>500_000)throw new Error('Legfeljebb 500 kB-os tervet válassz.');const next=parseDraft(await file.text());if(change(next,'A tervet betöltöttük.')){setActive(next.pieces[0]?.uid||'');setGrouping(false);setDetailsOpen(false);}}catch(error){setNotice(error instanceof Error?error.message:'A terv nem olvasható.');}if(importRef.current)importRef.current.value='';}
  const available=suggestedBlocks(draft.pieces,targetIndex);
  const catalogueOrder=['request','write','summarize','tasks','translate','image','audio','file'];
@@ -155,7 +157,7 @@ export default function ModuleBuilder(){
       <section className="mb-assembly-summary" aria-label="A kiválasztott feladatok összefoglalója"><div className="mb-summary-heading"><div><span className="mb-eyebrow">EZEKET VÁLASZTOTTAD</span><h2>A segítőd feladatai</h2></div><span>{draft.pieces.length} elem<br/><strong>{leaves.length} lépés</strong></span></div>
        <div className="mb-summary-chips">{summaryItems.map(({block:b,count})=><span key={b.id}><BlockIcon block={b} size={17}/>{b.name}{count>1&&<b>×{count}</b>}</span>)}</div>
        {problems.length>0?<div className="mb-summary-warning"><strong>A folytatáshoz ezen még igazítani kell:</strong>{draft.pieces.every((p,i)=>connection(draft.pieces[i-1],p).ok)&&<p>Egy együtt mentett kártyán belül nem jó a sorrend. Kattints rá, majd válaszd a „Lépések különválasztása” gombot.</p>}{draft.pieces.map((p,i)=>{const link=connection(draft.pieces[i-1],p);if(link.ok)return null;const repairIds=repairSteps(draft.pieces,i);return <div key={p.uid}><p>{definition(p).name}: {link.message}</p>{repairIds.length>0&&<button onClick={()=>repair(i)}><Plus size={15}/>{repairIds.map(id=>blocks.find(b=>b.id===id)!.name).join(' + ')} hozzáadása</button>}</div>;})}</div>:<p className="mb-summary-ok"><Link2 size={17}/>A feladatok sorrendje megfelelő. Most megmutatjuk, hogyan próbáld ki.</p>}
-       <div className="mb-use-next"><div><strong>Mit csinálj ezután?</strong><p>{problems.length?'Használd a fenti javítógombot, vagy válassz másik feladatot. Utána továbbléphetsz.':'Válaszd ki, hol próbálnád ki. Előkészítjük a bemásolható szöveget.'}</p></div><button disabled={problems.length>0} onClick={openHandoff}>Mutasd, hogyan próbáljam ki <ArrowUpRight size={19}/></button></div>
+       <div className="mb-use-next"><div><strong>Próbáld ki a saját feladatsorodat.</strong><p>{problems.length?'Javítsd a jelzett kapcsolatot, hogy a lépések egymás után működhessenek.':'Az írás, összefoglalás, teendők, fordítás, átnézés és szöveghez készített kép a privát műhelyben futtatható. Az eredmény a saját webes munkateredbe kerül.'}</p></div><button disabled={problems.length>0} onClick={runHere}>Ezt az összeállítást próbálom ki <ArrowUpRight size={19}/></button><button disabled={problems.length>0} onClick={openHandoff}>Kézi átadás másik AI-nak</button></div>
       </section>
      </>}
     </div>

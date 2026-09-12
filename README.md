@@ -2,6 +2,14 @@
 
 Magyar nyelvű tanulási és munkakörnyezet azoknak, akik segítség nélkül nem tudnak saját agentet készíteni.
 
+## Jelenlegi privát próba — 2026. szeptember 12.
+
+A Sites-példány kezdőoldala most a tényleges futtatáshoz kapcsolt modulműhely. Hét képességből állítható össze feladatsor: webes keresés, írás, összefoglalás, teendők, fordítás, átnézés és képkészítés. A mentett munka lépésenként halad, képkészítés előtt jóváhagyást kér, hiba után a befejezett lépéseket megtartja. A fájlokat mentés után újra beolvassa és bájtméret, illetve SHA-256 alapján ellenőrzi. Ez a fájl épségét igazolja, a tartalom tényszerűségét nem.
+
+**A próbaverzió csak a tulajdonos számára érhető el.** A nyilvános Netlify-kiadás továbbra is a „soon...” oldal. Az alábbi régebbi fejezetek korábbi megvalósításokat dokumentálnak; a jelenlegi publikálási állapotot ez a bekezdés és a [privát próba útmutatója](docs/privat-pilot.md) írja le.
+
+A kiadás előtti ellenőrzéskor nem volt beállítva OpenAI API-kulcs. A tervező és a tervmentés használható, az AI-indítás a kapcsolat beállításáig letiltott. A sikeres SQLite-, szolgáltatás- és API-tesztek helyettesített modellválaszokat és tárhelyadaptert használnak; élő generálást nem igazolnak. A modulműhely a nyitott böngészőlapon lépteti a feladatot; nem háttérben időzített automatizálás.
+
 ## Netlify weboldal és Render AI-szolgáltatás
 
 Az arculat az eredeti Claude-forrás (`foter/agens/agens.css`, `agens/index.html`) és az átadott grafikai csomag alapján került helyreállításra: eredeti sakkgyalog, kétszínű szólogó, sötét nyitósáv, papírfelület, arany rangjel, négy információs kocka, Fraunces és Archivo. A működés leírása a ténylegesen elkészült AI-ra vonatkozik.

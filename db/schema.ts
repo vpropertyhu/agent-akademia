@@ -40,3 +40,12 @@ export const aiWorks = sqliteTable('ai_works', {
  model:text('model').notNull(), tokens:integer('tokens').notNull().default(0),
  createdAt:text('created_at').notNull(), updatedAt:text('updated_at').notNull(),
 }, t=>[index('idx_ai_user_created').on(t.userId,t.createdAt),index('idx_ai_created').on(t.createdAt)]);
+
+export const pilotRuns=sqliteTable('pilot_runs',{
+ id:text('id').primaryKey(),userId:text('user_id').notNull(),stateJson:text('state_json').notNull(),
+ status:text('status').notNull(),revision:integer('revision').notNull().default(1),leaseUntil:text('lease_until'),
+ createdAt:text('created_at').notNull(),updatedAt:text('updated_at').notNull(),
+},t=>[index('idx_pilot_user_created').on(t.userId,t.createdAt),index('idx_pilot_created').on(t.createdAt)]);
+export const pilotAdmissions=sqliteTable('pilot_admissions',{
+ id:text('id').primaryKey(),userId:text('user_id').notNull(),createdAt:text('created_at').notNull(),
+},t=>[index('idx_pilot_admission_user_created').on(t.userId,t.createdAt),index('idx_pilot_admission_created').on(t.createdAt)]);
